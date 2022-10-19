@@ -16,4 +16,5 @@ server.use(express.json());
 
 server.listen(process.env.PORT, () => {
     console.log(`Magic happens on ${process.env.PORT}`);
-})
+});
+

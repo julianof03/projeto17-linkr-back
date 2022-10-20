@@ -8,7 +8,7 @@ async function CreatePost(req, res) {
         link } = req.body;
 
     try {
-        
+
         await connection.query('INSERT INTO posts ("userId", text, link, "createdAt") VALUES ($1, $2, $3, $4)', [
             userId,
             text,
@@ -48,7 +48,7 @@ async function EditPost(req, res) {
             'SELECT * FROM posts WHERE id = $1', [
             id,
         ]);
-
+        
         if (link) {
             linkMessage = " Link"
             const updateLink = await connection.query('UPDATE posts SET link = $1 WHERE id = $2', [

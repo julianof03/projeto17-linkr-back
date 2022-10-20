@@ -9,11 +9,10 @@ async function CreatePost(req, res) {
 
     try {
 
-        await connection.query('INSERT INTO posts ("userId", text, link, "createdAt") VALUES ($1, $2, $3, $4)', [
+        await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
             userId,
             text,
             link,
-            dayjs().format('YYYY-MM-DD hh:mm:ss')
         ]);
         res.sendStatus(201);
 

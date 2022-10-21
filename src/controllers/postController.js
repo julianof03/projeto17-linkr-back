@@ -5,22 +5,27 @@ import dayjs from "dayjs";
 
 async function CreatePost(req, res) {
   const { userId, text, link } = req.body;
-  const hashtagsArray = text.split(" ").filter((value) => value[0] === "#");
+  const hashtagsArray = await text.split(" ").filter((value) => value[0] === "#");
+  try {
+    await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
+      userId,
+      text,
+      link,
+    ]);
 
-  if (hashtagsArray.length === 0) {
-    try {
-      await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
-        userId,
-        text,
-        link,
-      ]);
-
-      res.sendStatus(201);
-    } catch (error) {
-      res.status(501).send({ message: error.message });
+    if (hashtagsArray.length !== 0) {
+      console.log("entrei");
+      for (let i = 0; i < hashtagsArray.length; i++) {
+        // checkHashtagExistance();
+        const atual = hashtagsArray[i];
+        console.log(atual);
+        await connection.query("INSERT INTO hashtags (name) VALUES ($1)", [atual]);
+      }
     }
-  } else {
-    addHashtag(req, res, hashtagsArray)
+    return res.sendStatus(201);
+  } catch (error) {
+    console.log(error);
+    res.status(501).send({ message: error.message });
   }
 }
 

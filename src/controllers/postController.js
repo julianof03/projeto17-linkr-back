@@ -23,17 +23,70 @@ async function CreatePost(req, res) {
     }
 }
 
-async function GetPost(req, res){
 
-    try {
+async function GetPost(req, res){
         const getPosts = await connection.query(
-            'SELECT * FROM posts'
+            `SELECT 
+            posts.id AS "postId",
+            posts.text,
+            posts.link,
+            users.name,
+            users."pictureUrl",
+            likes.liked,
+            posts."createdAt"
+            FROM posts
+            JOIN users ON posts."userId" = users.id
+            JOIN likes ON users.id = likes."userId"
+            ORDER BY posts."createdAt"`
         );
 
-        res.status(201).send(getPosts.rows);
-    } catch (error) {
-        res.status(404).send({ message: "url não encontrado" });
-    } 
+        const getCount = await connection.query(
+            `SELECT
+            likes."postId",
+            COUNT(likes."postId") as "count"
+            FROM likes
+            GROUP BY likes."postId"`
+        );
+
+        const ArrayPost = getPosts;
+        const ArrayCount = getCount;
+
+        let i = 0;
+        const BodyArray = [];
+        getPosts.rows.map((p)=>{
+            if(i > getPosts.rowCount) return;
+            let j = 0;
+            getCount.rows.map(()=>{
+                if(getCount.rows[j].postId === getPosts.rows[i].postId){
+                    BodyArray.push(
+                        {
+                            username: getPosts.rows[i].name,
+                            img: getPosts.rows[i].pictureUrl,
+                            text: getPosts.rows[i].text,
+                            link: getPosts.rows[i].link,
+                            likesQtd: parseInt(getCount.rows[j].count),
+                            liked: getPosts.rows[i].liked
+                        }
+                    )
+                }
+                else{
+                    BodyArray.push(
+                        {
+                            username: getPosts.rows[i].name,
+                            img: getPosts.rows[i].pictureUrl,
+                            text: getPosts.rows[i].text,
+                            link: getPosts.rows[i].link,
+                            likesQtd: 0,
+                            liked: getPosts.rows[i].liked
+                        }
+                    )
+                }
+                j++;
+            })
+            i++;
+        })
+        res.status(201).send(BodyArray);
+    
 
 }
 

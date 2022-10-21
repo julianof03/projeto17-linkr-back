@@ -18,7 +18,14 @@ async function CreatePost(req, res) {
       for (let i = 0; i < hashtagsArray.length; i++) {
         // checkHashtagExistance();
         const atual = hashtagsArray[i];
-        console.log(atual);
+        const isHashtagExists = await connection.query(
+          "SELECT (name) FROM hashtags WHERE name = $1",
+          [atual]
+        );
+
+        if (isHashtagExists.rowCount !== 0) {
+          continue;
+        }
         await connection.query("INSERT INTO hashtags (name) VALUES ($1)", [atual]);
       }
     }

@@ -1,7 +1,5 @@
-import { connection } from "../database/database.js";
-import { addHashtag } from "./hashtagController.js";
-
 import dayjs from "dayjs";
+import { connection } from "../database/database.js";
 
 async function CreatePost(req, res) {
   const { userId, text, link } = req.body;
@@ -14,9 +12,7 @@ async function CreatePost(req, res) {
     ]);
 
     if (hashtagsArray.length !== 0) {
-      console.log("entrei");
       for (let i = 0; i < hashtagsArray.length; i++) {
-        // checkHashtagExistance();
         const atual = hashtagsArray[i];
         const isHashtagExists = await connection.query(
           "SELECT (name) FROM hashtags WHERE name = $1",
@@ -24,14 +20,31 @@ async function CreatePost(req, res) {
         );
 
         if (isHashtagExists.rowCount !== 0) {
+          const hashtagId = await connection.query("SELECT (id) from hashtags WHERE name = $1", [
+            atual,
+          ]);
+          const postId = await connection.query(
+            'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
+            [userId, text, link]
+          );
+          await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [postId.rows[0].id, hashtagId.rows[0].id]);
           continue;
         }
         await connection.query("INSERT INTO hashtags (name) VALUES ($1)", [atual]);
+
+        const hashtagId = await connection.query("SELECT (id) from hashtags WHERE name = $1", [
+          atual,
+        ]);
+        const postId = await connection.query(
+          'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
+          [userId, text, link]
+        );
+        await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [postId.rows[0].id, hashtagId.rows[0].id]);
       }
     }
     return res.sendStatus(201);
   } catch (error) {
-    console.log(error);
+    console.log(error)
     res.status(501).send({ message: error.message });
   }
 }

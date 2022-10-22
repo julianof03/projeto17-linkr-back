@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv'
 
 import authRouter from '../src/router/authRouter.js';
-import PostController from "./router/postRouter.js"
+import PostRouter from "./router/postRouter.js"
+import userRouter from  "./router/usersRouter.js"
 
 
 const server = express();
@@ -12,7 +13,8 @@ server.use(express.json());
 dotenv.config()
 
 server.use(authRouter);
-server.use(PostController);
+server.use(PostRouter);
+server.use(userRouter);
 
 
 server.listen(process.env.PORT, () => {

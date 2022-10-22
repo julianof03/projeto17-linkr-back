@@ -2,16 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv'
 
-dotenv.config()
-
+import authRouter from '../src/router/authRouter.js';
 import PostController from "./router/postRouter.js"
-// import authRouters from './routers/authRouters.js';
 
 
 const server = express();
 server.use(cors());
 server.use(express.json());
+dotenv.config()
 
+server.use(authRouter);
 server.use(PostController);
 
 

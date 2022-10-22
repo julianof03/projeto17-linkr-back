@@ -16,7 +16,7 @@ export async function signUp(req, res){
         [email]);
 
         if(user.rows.length !== 0){
-            return res.sendStatus(401);
+            return res.status(401).send('Email inserido já cadastrado ou inválido.');
         }
 
         const hashPass = bcrypt.hashSync(password, 10);
@@ -58,6 +58,8 @@ export async function signIn(req, res){
         const config = {expiresIn: 60 * 60};
 
         const token = jwt.sign({userId: user.rows[0].id}, secretKey, config);
+
+        await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
 
         res.send({token}).status(201);
 

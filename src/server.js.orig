@@ -2,13 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-<<<<<<< HEAD
 import authRouter from '../src/router/authRouter.js';
 import PostRouter from "./router/postRouter.js"
 import userRouter from  "./router/usersRouter.js"
-=======
-dotenv.config();
->>>>>>> main
 
 import PostController from "./router/postRouter.js";
 import hashtagRouter from "./router/hashtagRouter.js";
@@ -20,14 +16,9 @@ server.use(express.json());
 dotenv.config();
 
 server.use(authRouter);
-<<<<<<< HEAD
 server.use(PostRouter);
 server.use(userRouter);
 
-=======
-server.use(PostController);
-server.use(hashtagRouter);
->>>>>>> main
 
 server.listen(process.env.PORT, () => {
   console.log(`Magic happens on ${process.env.PORT}`);

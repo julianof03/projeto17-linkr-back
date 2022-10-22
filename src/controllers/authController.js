@@ -68,3 +68,25 @@ export async function signIn(req, res){
         return res.sendStatus(500);
     }
 };
+
+export async function signOut(req,res){
+    const userId = res.locals.userId;
+    const token = res.locals.token;
+
+    try {
+        
+        await connection.query(`
+                UPDATE 
+                    sessions
+                SET 
+                "isValid"=false
+                WHERE
+                "userId" = $1 AND token =$2
+                ;`,[userId,token]);
+        return res.redirect('/login');
+
+    } catch (error) {
+        console.log(error.message)
+        return res.sendStatus(500);
+    }
+};

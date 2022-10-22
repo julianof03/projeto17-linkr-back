@@ -27,7 +27,10 @@ async function CreatePost(req, res) {
             'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
             [userId, text, link]
           );
-          await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [postId.rows[0].id, hashtagId.rows[0].id]);
+          await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
+            postId.rows[0].id,
+            hashtagId.rows[0].id,
+          ]);
           continue;
         }
         await connection.query("INSERT INTO hashtags (name) VALUES ($1)", [atual]);
@@ -39,26 +42,77 @@ async function CreatePost(req, res) {
           'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
           [userId, text, link]
         );
-        await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [postId.rows[0].id, hashtagId.rows[0].id]);
+        await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
+          postId.rows[0].id,
+          hashtagId.rows[0].id,
+        ]);
       }
     }
     return res.sendStatus(201);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(501).send({ message: error.message });
   }
 }
 
 async function GetPost(req, res) {
-  try {
-    const getPosts = await connection.query("SELECT * FROM posts");
+  const getPosts = await connection.query(
+    `SELECT 
+      posts.id AS "postId",
+      posts.text,
+      posts.link,
+      users.name,
+      users."pictureUrl",
+      likes.liked,
+      posts."createdAt"
+      FROM posts
+      JOIN users ON posts."userId" = users.id
+      JOIN likes ON users.id = likes."userId"
+      ORDER BY posts."createdAt"`
+  );
 
-    res.status(201).send(getPosts.rows);
-  } catch (error) {
-    res.status(404).send({ message: "url não encontrado" });
-  }
+  const getCount = await connection.query(
+    `SELECT
+      likes."postId",
+      COUNT(likes."postId") as "count"
+      FROM likes
+      GROUP BY likes."postId"`
+  );
+
+  const ArrayPost = getPosts;
+  const ArrayCount = getCount;
+
+  let i = 0;
+  const BodyArray = [];
+  getPosts.rows.map((p) => {
+    if (i > getPosts.rowCount) return;
+    let j = 0;
+    getCount.rows.map(() => {
+      if (getCount.rows[j].postId === getPosts.rows[i].postId) {
+        BodyArray.push({
+          username: getPosts.rows[i].name,
+          img: getPosts.rows[i].pictureUrl,
+          text: getPosts.rows[i].text,
+          link: getPosts.rows[i].link,
+          likesQtd: parseInt(getCount.rows[j].count),
+          liked: getPosts.rows[i].liked,
+        });
+      } else {
+        BodyArray.push({
+          username: getPosts.rows[i].name,
+          img: getPosts.rows[i].pictureUrl,
+          text: getPosts.rows[i].text,
+          link: getPosts.rows[i].link,
+          likesQtd: 0,
+          liked: getPosts.rows[i].liked,
+        });
+      }
+      j++;
+    });
+    i++;
+  });
+  res.status(201).send(BodyArray);
 }
-
 async function EditPost(req, res) {
   const { id } = req.params;
   const { link, text } = req.body;

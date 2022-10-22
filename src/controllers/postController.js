@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import { connection } from "../database/database.js";
 
+import {postRepository } from '../repositories/postRepositories.js'
+
 async function CreatePost(req, res) {
   const { userId, text, link } = req.body;
   const hashtagsArray = [];
@@ -11,24 +13,29 @@ async function CreatePost(req, res) {
   });
 
   try {
-    await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
-      userId,
-      text,
-      link,
-    ]);
+    // await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
+    //   userId,
+    //   text,
+    //   link,
+    // ]);
+    await postRepository.insertPost(userId, text, link)
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
         const atual = hashtagsArray[i];
-        const isHashtagExists = await connection.query(
-          "SELECT (name) FROM hashtags WHERE name = $1",
-          [atual]
-        );
+        // const isHashtagExists = await connection.query(
+        //   "SELECT (name) FROM hashtags WHERE name = $1",
+        //   [atual]
+        // );
+        const isHashtagExists = await postRepository.getHashtagByName(atual)
 
+        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX olhar aqui se da pra resumir
+        // nao precisa fazer tanto select
         if (isHashtagExists.rowCount !== 0) {
           const hashtagId = await connection.query("SELECT (id) from hashtags WHERE name = $1", [
             atual,
           ]);
+
           const postId = await connection.query(
             'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
             [userId, text, link]
@@ -119,6 +126,7 @@ async function GetPost(req, res) {
   });
   res.status(201).send(BodyArray);
 }
+
 async function EditPost(req, res) {
   const { id } = req.params;
   const { link, text } = req.body;
@@ -152,7 +160,8 @@ async function EditPost(req, res) {
 async function DeletePost(req, res) {
   const { id } = req.params;
   try {
-    await connection.query("DELETE FROM posts WHERE id = $1", [id]);
+    // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
+    await postRepository.deletePost(id);
     res.status(204).send({ message: "menssagem deletada" });
   } catch (error) {
     res.status(501).send({ message: error.message });

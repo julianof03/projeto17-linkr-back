@@ -34,11 +34,8 @@ export function validateSignIn(req, res, next) {
 export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
 
-    console.log(req.headers.authorization)
-
     if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
-        console.log('bearer errado')
-        console.log(authorization)
+
         return res.sendStatus(401);
     };
 

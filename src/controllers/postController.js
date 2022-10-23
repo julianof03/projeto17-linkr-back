@@ -1,12 +1,11 @@
 import dayjs from "dayjs";
 import { connection } from "../database/database.js";
-
 import { postRepository } from '../repositories/postRepositories.js'
 
 async function CreatePost(req, res) {
   const { text, link } = req.body;
-
   const { userId } = res.locals
+
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
     if (value[0] === "#") {
@@ -15,7 +14,6 @@ async function CreatePost(req, res) {
   });
 
   try {
-
 
     await postRepository.insertPost(userId, text, link)
 

@@ -4,21 +4,9 @@ import { usersRepository } from '../repositories/usersRepositories.js'
 export async function searchUsers(req, res) {
     const { startsWith } = req.params;
     try {
-        // const users = await connection.query(`
-        // SELECT
-        // "pictureUrl", name
-        // FROM
-        //     users
-        // WHERE
-        //     (lower(name) LIKE '${startsWith}%') 
-        // ORDER BY
-        // name
-        // LIMIT
-        // 5`);
-        console.log('repositories')
+
         const users = await usersRepository.searchUser(startsWith)
 
-        console.log("users retorno",users.rows)
         return res.status(200).send(users.rows)
 
     } catch (error) {

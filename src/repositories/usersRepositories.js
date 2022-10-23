@@ -1,9 +1,8 @@
 import { connection } from "../database/database.js";
 
 async function searchUser(startsWith) {
-    const query = `SELECT"pictureUrl", name FROM users WHERE (lower(name) LIKE '${startsWith}%') ORDER BY name LIMIT5`
+    const query = `SELECT "pictureUrl", name FROM users WHERE (lower(name) LIKE '${startsWith}%') ORDER BY name LIMIT 5`
     return connection.query(query)
-
 }
 
 async function getPicture(userId) {
@@ -11,7 +10,6 @@ async function getPicture(userId) {
     return connection.query(query)
 
 }
-
 
 const usersRepository = {
     searchUser,

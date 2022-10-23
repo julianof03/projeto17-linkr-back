@@ -7,7 +7,7 @@ async function searchUser(startsWith) {
 
 async function getPicture(userId) {
     const query = `SELECT "pictureUrl" FROM users WHERE id =$1 LIMIT 1`
-    return connection.query(query)
+    return connection.query(query,[userId])
 
 }
 

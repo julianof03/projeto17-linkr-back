@@ -30,7 +30,7 @@ export async function userInfo(req, res) {
 
         const user = await usersRepository.getPicture(userId)
 
-        return res.status(200).send(user.rows);
+        return res.status(200).send(user.rows[0].pictureUrl);
 
     } catch (error) {
         res.status(501).send({ message: error.message });

@@ -15,9 +15,10 @@ export async function searchUsers(req, res) {
         // name
         // LIMIT
         // 5`);
-
+        console.log('repositories')
         const users = await usersRepository.searchUser(startsWith)
 
+        console.log("users retorno",users.rows)
         return res.status(200).send(users.rows)
 
     } catch (error) {

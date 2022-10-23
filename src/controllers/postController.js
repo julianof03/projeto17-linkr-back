@@ -1,10 +1,12 @@
 import dayjs from "dayjs";
 import { connection } from "../database/database.js";
 
-import {postRepository } from '../repositories/postRepositories.js'
+import { postRepository } from '../repositories/postRepositories.js'
 
 async function CreatePost(req, res) {
-  const { userId, text, link } = req.body;
+  const { text, link } = req.body;
+
+  const { userId } = res.locals
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
     if (value[0] === "#") {
@@ -13,21 +15,14 @@ async function CreatePost(req, res) {
   });
 
   try {
-    // await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
-    //   userId,
-    //   text,
-    //   link,
-    // ]);
-    
+
+
     await postRepository.insertPost(userId, text, link)
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
         const atual = hashtagsArray[i];
-        // const isHashtagExists = await connection.query(
-        //   "SELECT (name) FROM hashtags WHERE name = $1",
-        //   [atual]
-        // );
+
         const isHashtagExists = await postRepository.getHashtagByName(atual)
 
         // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX olhar aqui se da pra resumir

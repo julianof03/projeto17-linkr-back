@@ -1,13 +1,14 @@
 import signUpSchema from "../schema/signUpSchema.js";
 import signInSchema from "../schema/signInSchema.js";
 import jwt from 'jsonwebtoken';
+import {connection} from '../database/database.js'
 
-export function validateSignUp(req, res, next){
+export function validateSignUp(req, res, next) {
     const customer = req.body;
 
-    const {error} = signUpSchema.validate(customer, {abortEarly: false});
+    const { error } = signUpSchema.validate(customer, { abortEarly: false });
 
-    if(error){
+    if (error) {
         const erros = error.details.map(erro => erro.message)
         return res.status(422).send(erros)
     }
@@ -15,14 +16,14 @@ export function validateSignUp(req, res, next){
     next()
 };
 
-export function validateSignIn(req, res, next){
+export function validateSignIn(req, res, next) {
 
     const customer = req.body;
 
-    const {error} = signInSchema.validate(customer, {abortEarly: false});
+    const { error } = signInSchema.validate(customer, { abortEarly: false });
 
-    if(error){
-        
+    if (error) {
+
         const erros = error.details.map(erro => erro.message)
         return res.status(422).send(erros)
     }
@@ -30,26 +31,31 @@ export function validateSignIn(req, res, next){
     next()
 };
 
-export async function loggedUser(req,res,next){
+export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
 
-    if(!authorization|| authorization.slice(0,7) !== 'Bearer '){
+    console.log(req.headers.authorization)
+
+    if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
+        console.log('bearer errado')
+        console.log(authorization)
         return res.sendStatus(401);
     };
 
-    const token = authorization.replace('Bearer ','');
+    const token = authorization.replace('Bearer ', '');
     let userId;
 
     try {
-        const verification = jwt.verify(token,process.env.TOKEN_SECRET);
+        const verification = jwt.verify(token, process.env.TOKEN_SECRET);
         userId = verification.userId;
-        
+
     } catch (error) {
+        console.log(error)
         return res.status(401).send('Invalid Token')
     }
 
     try {
-        
+
         const hasToken = await connection.query(`
         SELECT
         "isValid"
@@ -60,9 +66,9 @@ export async function loggedUser(req,res,next){
         LIMIT
         1
         ;
-        `,[userId,token]);
+        `, [userId, token]);
 
-        if(hasToken.rows.length ===0|| !hasToken.rows[0].isValid){
+        if (hasToken.rows.length === 0 || !hasToken.rows[0].isValid) {
             return res.sendStatus(401);
         };
 

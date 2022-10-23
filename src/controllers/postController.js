@@ -76,6 +76,7 @@ async function GetPost(req, res) {
       posts.text,
       posts.link,
       users.name,
+      users.id AS "userId",
       users."pictureUrl",
       likes.liked,
       posts."createdAt"
@@ -105,6 +106,7 @@ async function GetPost(req, res) {
       if (getCount.rows[j].postId === getPosts.rows[i].postId) {
         BodyArray.push({
           username: getPosts.rows[i].name,
+          userId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
@@ -114,6 +116,7 @@ async function GetPost(req, res) {
       } else {
         BodyArray.push({
           username: getPosts.rows[i].name,
+          userId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,

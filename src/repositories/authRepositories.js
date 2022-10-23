@@ -5,9 +5,10 @@ async function signUp(name, email, password, pictureUrl) {
     return connection.query(query, [name, email, password, pictureUrl]);
 }
 
-async function signIn(id, token) {
-    const query = `INSERT INTO sessions ("userId", token) VALUES ($1, $2);`;
-    return connection.query(query, [id, token]);
+async function signIn(id, token, isValid) {
+    console.log(id, token, isValid)
+    const query = `INSERT INTO sessions ("userId", token, "isValid") VALUES ($1, $2, $3);`;
+    return connection.query(query, [id, token, isValid]);
 }
 
 async function getUserByEmail(email) {
@@ -24,7 +25,8 @@ async function signOut(userId, token) {
 const authRepository = {
 	signUp,
     getUserByEmail,
-    signIn
+    signIn,
+    signOut
 };
 
 export { authRepository };

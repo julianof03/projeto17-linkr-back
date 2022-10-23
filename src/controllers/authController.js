@@ -67,13 +67,15 @@ export async function signIn(req, res) {
 
         const token = jwt.sign({ userId: user.rows[0].id }, secretKey, config);
 
+        const userId = user.rows[0].id
+        console.log(userId)
         // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
-        await sessionsRepository.signIn(user.id, tokenJWT, true)
+        await authRepository.signIn(userId, token, true)
 
         res.send({ token }).status(201);
 
     } catch (error) {
-        console.log(error.message)
+        console.log(error)
         return res.sendStatus(500);
     }
 };

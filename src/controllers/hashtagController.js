@@ -2,6 +2,7 @@ import { connection } from "../database/database.js";
 import { hashtagRepository } from "../repositories/hashtagRepositories.js";
 async function getHashtagPosts(req, res) {
   const { hashtag } = req.params;
+  
   try {
     const filteredPosts = await hashtagRepository.getHashtagPosts(hashtag);
     res.status(200).send(filteredPosts.rows);

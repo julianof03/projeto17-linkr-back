@@ -18,6 +18,7 @@ async function CreatePost(req, res) {
     //   text,
     //   link,
     // ]);
+    
     await postRepository.insertPost(userId, text, link)
 
     if (hashtagsArray.length !== 0) {
@@ -81,7 +82,7 @@ async function GetPost(req, res) {
       FROM posts
       JOIN users ON posts."userId" = users.id
       JOIN likes ON users.id = likes."userId"
-      ORDER BY posts."createdAt"`
+      ORDER BY posts."createdAt" DESC`
   );
 
   const getCount = await connection.query(

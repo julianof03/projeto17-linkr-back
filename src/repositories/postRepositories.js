@@ -27,10 +27,6 @@ async function insertHashtag(atual) {
 // 
 
 
-
-
-
-
 async function deletePost(id){
     const query = `DELETE FROM posts WHERE id = $1`
     return connection.query(query, [id])

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import {connection} from '../database/database.js'
 
 export function validateSignUp(req, res, next) {
+    console.log("entrei aqui")
     const customer = req.body;
 
     const { error } = signUpSchema.validate(customer, { abortEarly: false });

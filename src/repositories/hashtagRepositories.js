@@ -17,7 +17,7 @@ async function getHashtagPosts(hashtag) {
 
 }
 
-hashtagRepository = {
+const hashtagRepository = {
     getHashtagPosts
 }
 

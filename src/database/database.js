@@ -11,5 +11,6 @@ const connection = new Pool({
         rejectUnauthorized: false
     }
 });
+console.log('banco conectado')
 
 export { connection };

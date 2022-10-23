@@ -12,6 +12,7 @@ async function CreatePost(req, res) {
     //   text,
     //   link,
     // ]);
+    
     await postRepository.insertPost(userId, text, link)
 
     if (hashtagsArray.length !== 0) {

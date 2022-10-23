@@ -5,7 +5,13 @@ import {postRepository } from '../repositories/postRepositories.js'
 
 async function CreatePost(req, res) {
   const { userId, text, link } = req.body;
-  const hashtagsArray = await text.split(" ").filter((value) => value[0] === "#");
+  const hashtagsArray = [];
+  await text.split(" ").forEach((value) => {
+    if (value[0] === "#") {
+      hashtagsArray.push(value.replace("#", ""));
+    }
+  });
+
   try {
     // await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
     //   userId,

@@ -1,69 +1,12 @@
-import { connection } from "../database/database.js";
-// import { hashtagRepository } from "../repositories/hashtagRepositories.js";
+import { hashtagRepository } from "../repositories/hashtagRepositories.js";
 async function getHashtagPosts(req, res) {
   const { hashtag } = req.params;
   
   try {
-    const getPosts = await connection.query(
-      `SELECT 
-      posts.id AS "postId",
-      posts.text,
-      posts.link,
-      users.name,
-      users.id AS "userId",
-      users."pictureUrl",
-      likes.liked,
-      posts."createdAt"
-      FROM posts
-      JOIN users ON posts."userId" = users.id
-      JOIN likes ON users.id = likes."userId"
-      JOIN "hashPost" ON "hashPost"."postId" = posts.id
-      JOIN hashtags ON "hashPost"."hashtagId" = hashtags.id
-      WHERE hashtags.name = $1
-      ORDER BY posts."createdAt" DESC`,
-      [hashtag]
-    );
-  
-    const getCount = await connection.query(
-      `SELECT
-        likes."postId",
-        COUNT(likes."postId") as "count"
-        FROM likes
-        GROUP BY likes."postId"`
-    );
-    let i = 0;
-    const filteredPosts = [];
-  
-    getPosts.rows.map((p) => {
-      if (i > getPosts.rowCount) return;
-      let j = 0;
-      getCount.rows.map(() => {
-        if (getCount.rows[j].postId === getPosts.rows[i].postId) {
-          filteredPosts.push({
-            username: getPosts.rows[i].name,
-            userId: getPosts.rows[i].userId,
-            img: getPosts.rows[i].pictureUrl,
-            text: getPosts.rows[i].text,
-            link: getPosts.rows[i].link,
-            likesQtd: parseInt(getCount.rows[j].count),
-            liked: getPosts.rows[i].liked,
-          });
-        } else {
-          filteredPosts.push({
-            username: getPosts.rows[i].name,
-            userId: getPosts.rows[i].userId,
-            img: getPosts.rows[i].pictureUrl,
-            text: getPosts.rows[i].text,
-            link: getPosts.rows[i].link,
-            likesQtd: 0,
-            liked: getPosts.rows[i].liked,
-          });
-        }
-        j++;
-      });
-      i++;
-    });
-   
+    const postsHashtag = await hashtagRepository.getPostsHashtag(hashtag)
+    const likesHashtag = await hashtagRepository.getLikesHashtag()
+    const filteredPosts = createHashPostObject(postsHashtag, likesHashtag)
+
     res.status(200).send(filteredPosts);
   } catch (error) {
     console.log(error)
@@ -72,12 +15,47 @@ async function getHashtagPosts(req, res) {
 }
 async function getTrendingHashtags(req, res) {
   try {
-    const trendingHashtags = await connection.query(
-      'SELECT hashtags.name, COUNT("hashPost"."hashtagId") AS "countMentions" from hashtags JOIN "hashPost" ON "hashPost"."hashtagId" = hashtags.id GROUP BY hashtags.name ORDER BY "countMentions" DESC LIMIT 10'
-    );
+    const trendingHashtags = await hashtagRepository.getTrending()
+   
     res.status(200).send(trendingHashtags.rows);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
+}
+
+function createHashPostObject(postsHashtag, likesHashtag) {
+  let i = 0;
+  const filteredPosts = [];
+  postsHashtag.rows.map((p) => {
+    if (i > postsHashtag.rowCount) return;
+    let j = 0;
+    likesHashtag.rows.map(() => {
+      if (likesHashtag.rows[j].postId === postsHashtag.rows[i].postId) {
+        filteredPosts.push({
+          username: postsHashtag.rows[i].name,
+          userId: postsHashtag.rows[i].userId,
+          img: postsHashtag.rows[i].pictureUrl,
+          text: postsHashtag.rows[i].text,
+          link: postsHashtag.rows[i].link,
+          likesQtd: parseInt(likesHashtag.rows[j].count),
+          liked: postsHashtag.rows[i].liked,
+        });
+      } else {
+        filteredPosts.push({
+          username: postsHashtag.rows[i].name,
+          userId: postsHashtag.rows[i].userId,
+          img: postsHashtag.rows[i].pictureUrl,
+          text: postsHashtag.rows[i].text,
+          link: postsHashtag.rows[i].link,
+          likesQtd: 0,
+          liked: postsHashtag.rows[i].liked,
+        });
+      }
+      j++;
+    });
+    i++;
+  });
+
+  return filteredPosts
 }
 export { getHashtagPosts, getTrendingHashtags };

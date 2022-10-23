@@ -13,12 +13,6 @@ async function CreatePost(req, res) {
   });
 
   try {
-    // await connection.query('INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)', [
-    //   userId,
-    //   text,
-    //   link,
-    // ]);
-    
     await postRepository.insertPost(userId, text, link)
 
     if (hashtagsArray.length !== 0) {

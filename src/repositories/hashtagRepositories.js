@@ -1,8 +1,7 @@
 import { connection } from "../database/database.js";
 
-async function getHashtagPosts(hashtag) {
-  const getPosts = await connection.query(
-    `SELECT 
+async function getPostsHashtag(hashtag) {
+  const postsHashtags = `SELECT 
     posts.id AS "postId",
     posts.text,
     posts.link,
@@ -17,57 +16,29 @@ async function getHashtagPosts(hashtag) {
     JOIN "hashPost" ON "hashPost"."postId" = posts.id
     JOIN hashtags ON "hashPost"."hashtagId" = hashtags.id
     WHERE hashtags.name = $1
-    ORDER BY posts."createdAt" DESC`,
-    [hashtag]
-  );
+    ORDER BY posts."createdAt" DESC`;
+  return connection.query(postsHashtags, [hashtag]);
+}
 
-  const getCount = await connection.query(
-    `SELECT
+async function getLikesHashtag() {
+  const countLikesHashtag = `SELECT
       likes."postId",
       COUNT(likes."postId") as "count"
       FROM likes
-      GROUP BY likes."postId"`
-  );
-  let i = 0;
-  const query = [];
+      GROUP BY likes."postId"`;
 
-  getPosts.rows.map((p) => {
-    if (i > getPosts.rowCount) return;
-    let j = 0;
-    getCount.rows.map(() => {
-      if (getCount.rows[j].postId === getPosts.rows[i].postId) {
-        query.push({
-          username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
-          img: getPosts.rows[i].pictureUrl,
-          text: getPosts.rows[i].text,
-          link: getPosts.rows[i].link,
-          likesQtd: parseInt(getCount.rows[j].count),
-          liked: getPosts.rows[i].liked,
-        });
-      } else {
-        query.push({
-          username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
-          img: getPosts.rows[i].pictureUrl,
-          text: getPosts.rows[i].text,
-          link: getPosts.rows[i].link,
-          likesQtd: 0,
-          liked: getPosts.rows[i].liked,
-        });
-      }
-      j++;
-    });
-    i++;
-  });
+  return connection.query(countLikesHashtag);
+}
 
-  console.log("oi " + query);
-
-  return connection.query(query, [hashtag]);
+async function getTrending() {
+  const trendingHashtags =  'SELECT hashtags.name, COUNT("hashPost"."hashtagId") AS "countMentions" from hashtags JOIN "hashPost" ON "hashPost"."hashtagId" = hashtags.id GROUP BY hashtags.name ORDER BY "countMentions" DESC LIMIT 10'
+  return connection.query(trendingHashtags);
 }
 
 const hashtagRepository = {
-  getHashtagPosts,
+  getPostsHashtag,
+  getLikesHashtag,
+  getTrending
 };
 
 export { hashtagRepository };

@@ -42,7 +42,8 @@ export async function loggedUser(req, res, next) {
 
     const token = authorization.replace('Bearer ', '');
     let userId;
-
+    console.log(req.headers);
+    console.log(token);
     try {
         const verification = jwt.verify(token, process.env.TOKEN_SECRET);
         userId = verification.userId;

@@ -1,11 +1,6 @@
 import dayjs from "dayjs";
 import { connection } from "../database/database.js";
-<<<<<<< HEAD
-
-import { postRepository } from "../repositories/postRepositories.js";
-=======
 import { postRepository } from '../repositories/postRepositories.js'
->>>>>>> main
 
 async function CreatePost(req, res) {
   const { text, link } = req.body;
@@ -19,26 +14,14 @@ async function CreatePost(req, res) {
   });
 
   try {
-<<<<<<< HEAD
-    await postRepository.insertPost(userId, text, link);
-=======
 
     await postRepository.insertPost(userId, text, link)
->>>>>>> main
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
         const atual = hashtagsArray[i];
-<<<<<<< HEAD
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
-=======
-
-        const isHashtagExists = await postRepository.getHashtagByName(atual)
-
-        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX olhar aqui se da pra resumir
-        // nao precisa fazer tanto select
->>>>>>> main
         if (isHashtagExists.rowCount !== 0) {
           hashtagId = isHashtagExists.rows[0].id;
           await insertHashPost(hashtagId, userId, text, link);

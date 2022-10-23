@@ -20,39 +20,18 @@ async function CreatePost(req, res) {
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
         const atual = hashtagsArray[i];
-
-        const isHashtagExists = await postRepository.getHashtagByName(atual)
-
-        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX olhar aqui se da pra resumir
-        // nao precisa fazer tanto select
+        const isHashtagExists = await postRepository.getHashtagIdByName(atual);
+        let hashtagId;
         if (isHashtagExists.rowCount !== 0) {
-          const hashtagId = await connection.query("SELECT (id) from hashtags WHERE name = $1", [
-            atual,
-          ]);
-
-          const postId = await connection.query(
-            'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
-            [userId, text, link]
-          );
-          await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
-            postId.rows[0].id,
-            hashtagId.rows[0].id,
-          ]);
+          hashtagId = isHashtagExists.rows[0].id;
+          await insertHashPost(hashtagId, userId, text, link);
           continue;
         }
-        await connection.query("INSERT INTO hashtags (name) VALUES ($1)", [atual]);
 
-        const hashtagId = await connection.query("SELECT (id) from hashtags WHERE name = $1", [
-          atual,
-        ]);
-        const postId = await connection.query(
-          'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 LIMIT 1',
-          [userId, text, link]
-        );
-        await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
-          postId.rows[0].id,
-          hashtagId.rows[0].id,
-        ]);
+        await postRepository.insertHashtag(atual);
+        const newHashtagId = await postRepository.getHashtagIdByName(atual);
+        hashtagId = newHashtagId.rows[0].id;
+        await insertHashPost(hashtagId, userId, text, link)
       }
     }
     return res.sendStatus(201);
@@ -163,6 +142,14 @@ async function DeletePost(req, res) {
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
+}
+
+async function insertHashPost(hashtagId, userId, text, link) {
+  const postId = await postRepository.getPostId(userId, text, link);
+  await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
+    postId.rows[0].id,
+    hashtagId,
+  ]);
 }
 
 export { CreatePost, EditPost, DeletePost, GetPost };

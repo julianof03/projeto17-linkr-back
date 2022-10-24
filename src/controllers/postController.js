@@ -14,8 +14,14 @@ async function CreatePost(req, res) {
   });
 
   try {
-
+    // bloco insert post + like
+    const liked = false
     await postRepository.insertPost(userId, text, link)
+    const getPost = await connection.query(`
+    SELECT * FROM posts 
+    WHERE posts."userId" = $1`, [userId])
+    const postId = (getPost.rows[(getPost.rows.length-1)].id)
+    await postRepository.insertLike(userId, postId, liked)
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
@@ -56,7 +62,9 @@ async function GetPost(req, res) {
       JOIN users ON posts."userId" = users.id
       JOIN likes ON users.id = likes."userId"
       ORDER BY posts."createdAt" DESC`
+    
   );
+  console.log(getPosts.rows)
 
   const getCount = await connection.query(
     `SELECT
@@ -71,10 +79,12 @@ async function GetPost(req, res) {
 
   let i = 0;
   const BodyArray = [];
-  getPosts.rows.map((p) => {
+  getPosts.rows.map((value, index) => {
+
     if (i > getPosts.rowCount) return;
     let j = 0;
     getCount.rows.map(() => {
+
       if (getCount.rows[j].postId === getPosts.rows[i].postId) {
         BodyArray.push({
           username: getPosts.rows[i].name,
@@ -84,7 +94,7 @@ async function GetPost(req, res) {
           link: getPosts.rows[i].link,
           likesQtd: parseInt(getCount.rows[j].count),
           liked: getPosts.rows[i].liked,
-        });
+        })
       } else {
         BodyArray.push({
           username: getPosts.rows[i].name,
@@ -97,7 +107,7 @@ async function GetPost(req, res) {
         });
       }
       j++;
-    });
+    }); 
     i++;
   });
   res.status(201).send(BodyArray);
@@ -150,6 +160,24 @@ async function insertHashPost(hashtagId, userId, text, link) {
     postId.rows[0].id,
     hashtagId,
   ]);
+}
+
+
+async function updateLike(req, res) {
+  const { userId, postId } = req.body
+
+  try {
+
+
+
+
+    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
+
+    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
+
+  } catch (error) {
+    res.status(501).send({ message: error.message });
+  }
 }
 
 export { CreatePost, EditPost, DeletePost, GetPost };

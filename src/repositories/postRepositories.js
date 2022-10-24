@@ -4,7 +4,12 @@ async function insertPost(userId, text, link) {
     const query = `INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)`
 
     return connection.query(query, [userId, text, link])
-    
+   
+}
+async function insertLike(userId, postId, liked) {
+    const query = `INSERT INTO likes ( "userId", "postId", liked) VALUES ($1, $2, $3)`
+    return connection.query(query, [userId, postId,liked])
+   
 }
 
 async function getHashtagIdByName(atual) {
@@ -38,6 +43,7 @@ const postRepository = {
     getHashtagIdByName,
     getPostId,
     insertHashtag,
+    insertLike,
 
 
 

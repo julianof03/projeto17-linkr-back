@@ -14,4 +14,5 @@ router.get('/timeline', GetPost);
 router.post('/timeline/:id', validateCreatePostSchema, EditPost);
 router.delete('/timeline/:id', validateCreatePostSchema, DeletePost);
 
+
 export default router;

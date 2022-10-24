@@ -77,6 +77,7 @@ async function GetPost(req, res) {
     getCount.rows.map(() => {
       if (getCount.rows[j].postId === getPosts.rows[i].postId) {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
           userId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
@@ -87,6 +88,7 @@ async function GetPost(req, res) {
         });
       } else {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
           userId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
@@ -105,20 +107,11 @@ async function GetPost(req, res) {
 
 async function EditPost(req, res) {
   const { id } = req.params;
-  const { link, text } = req.body;
-  let textMessage,
-    linkMessage = "";
+  const { text } = req.body;
+  let textMessage = "";
 
   try {
     const getPosts = await connection.query("SELECT * FROM posts WHERE id = $1", [id]);
-
-    if (link) {
-      linkMessage = " Link";
-      const updateLink = await connection.query("UPDATE posts SET link = $1 WHERE id = $2", [
-        link,
-        id,
-      ]);
-    }
     if (text) {
       textMessage = " Texto";
       const updateText = await connection.query("UPDATE posts SET text = $1 WHERE id = $2", [
@@ -126,8 +119,8 @@ async function EditPost(req, res) {
         id,
       ]);
     }
-
-    res.status(201).send({ message: `foram atualizados:${linkMessage} ${textMessage}` });
+    console.log("vou atualizar o:", id);
+    res.status(201).send({ message: `foram atualizados: ${textMessage}` });
   } catch (error) {
     res.status(404).send({ message: "url não encontrado" });
   }

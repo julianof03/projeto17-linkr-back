@@ -181,3 +181,4 @@ async function updateLike(req, res) {
 }
 
 export { CreatePost, EditPost, DeletePost, GetPost };
+export { CreatePost, EditPost, DeletePost, GetPost };

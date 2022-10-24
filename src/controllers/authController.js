@@ -68,7 +68,6 @@ export async function signIn(req, res) {
         const token = jwt.sign({ userId: user.rows[0].id }, secretKey, config);
 
         const userId = user.rows[0].id
-        console.log(userId)
         // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
         await authRepository.signIn(userId, token, true)
 
@@ -95,10 +94,10 @@ export async function signOut(req, res) {
         //         "userId" = $1 AND token =$2
         //         ;`, [userId, token]);
 
-        await sessionsRepository.signOut(userId, token)
+        await authRepository.signOut(userId, token)
 
 
-        return res.redirect('/login');
+        return res.sendStatus(200);
     } catch (error) {
         console.log(error.message)
         return res.sendStatus(500);

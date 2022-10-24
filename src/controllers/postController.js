@@ -79,7 +79,7 @@ async function GetPost(req, res) {
         BodyArray.push({
           postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
@@ -90,7 +90,7 @@ async function GetPost(req, res) {
         BodyArray.push({
           postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,

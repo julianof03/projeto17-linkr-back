@@ -71,7 +71,7 @@ export async function signIn(req, res) {
         // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
         await authRepository.signIn(userId, token, true)
 
-        res.send( token ).status(201);
+        res.status(201).send({userId, token});
 
     } catch (error) {
         console.log(error)

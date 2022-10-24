@@ -87,8 +87,9 @@ async function GetPost(req, res) {
 
       if (getCount.rows[j].postId === getPosts.rows[i].postId) {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
@@ -97,8 +98,9 @@ async function GetPost(req, res) {
         })
       } else {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
@@ -116,20 +118,11 @@ async function GetPost(req, res) {
 
 async function EditPost(req, res) {
   const { id } = req.params;
-  const { link, text } = req.body;
-  let textMessage,
-    linkMessage = "";
+  const { text } = req.body;
+  let textMessage = "";
 
   try {
     const getPosts = await connection.query("SELECT * FROM posts WHERE id = $1", [id]);
-
-    if (link) {
-      linkMessage = " Link";
-      const updateLink = await connection.query("UPDATE posts SET link = $1 WHERE id = $2", [
-        link,
-        id,
-      ]);
-    }
     if (text) {
       textMessage = " Texto";
       const updateText = await connection.query("UPDATE posts SET text = $1 WHERE id = $2", [
@@ -137,8 +130,8 @@ async function EditPost(req, res) {
         id,
       ]);
     }
-
-    res.status(201).send({ message: `foram atualizados:${linkMessage} ${textMessage}` });
+    console.log("vou atualizar o:", id);
+    res.status(201).send({ message: `foram atualizados: ${textMessage}` });
   } catch (error) {
     res.status(404).send({ message: "url não encontrado" });
   }
@@ -163,7 +156,6 @@ async function insertHashPost(hashtagId, userId, text, link) {
   ]);
 }
 
-
 async function updateLike(req, res) {
   const { userId, postId } = req.body
 
@@ -180,5 +172,4 @@ async function updateLike(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-
-export { CreatePost, EditPost, DeletePost, GetPost };
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike };

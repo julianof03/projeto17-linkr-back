@@ -8,14 +8,9 @@ import { authRepository } from '../repositories/authRepositories.js'
 dotenv.config();
 
 export async function signUp(req, res) {
-
+    console.log("entrei Aqui");
     try {
         const { email, password, name, pictureUrl } = req.body;
-
-        // const user = await connection.query(`
-        // SELECT * FROM users
-        // WHERE email = $1`,
-        //     [email]);
 
         const user = await authRepository.getUserByEmail(email)
 
@@ -24,11 +19,6 @@ export async function signUp(req, res) {
         }
 
         const hashPass = bcrypt.hashSync(password, 10);
-
-        // await connection.query(`
-        // INSERT INTO users (email, password, name, "pictureUrl")
-        // VALUES ($1, $2, $3, $4)`,
-        //     [email, hashPass, name, pictureUrl]);
 
         await authRepository.signUp(name, email, hashPass, pictureUrl);
 
@@ -62,13 +52,11 @@ export async function signIn(req, res) {
         const config = { expiresIn: 60 * 60 };
 
         const token = jwt.sign({ userId: user.rows[0].id }, secretKey, config);
-
         const userId = user.rows[0].id
-        // console.log(userId)
-        // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
+
         await authRepository.signIn(userId, token, true)
 
-        res.send(token).status(201);
+        res.status(201).send({userId, token});
 
     } catch (error) {
         console.log(error)
@@ -82,16 +70,7 @@ export async function signOut(req, res) {
 
     try {
 
-        // await connection.query(`
-        //         UPDATE 
-        //             sessions
-        //         SET 
-        //         "isValid"=false
-        //         WHERE
-        //         "userId" = $1 AND token =$2
-        //         ;`, [userId, token]);
-
-        await sessionsRepository.signOut(userId, token)
+        await authRepository.signOut(userId, token)
 
 
         return res.redirect('/login');

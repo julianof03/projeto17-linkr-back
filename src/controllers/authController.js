@@ -45,10 +45,6 @@ export async function signIn(req, res) {
     try {
         const { email, password } = req.body;
 
-        // const user = await connection.query(`
-        // SELECT * FROM users 
-        // WHERE email = $1`,
-        //     [email]);
         const user = await authRepository.getUserByEmail(email)
 
 
@@ -68,11 +64,11 @@ export async function signIn(req, res) {
         const token = jwt.sign({ userId: user.rows[0].id }, secretKey, config);
 
         const userId = user.rows[0].id
-        console.log(userId)
+        // console.log(userId)
         // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
         await authRepository.signIn(userId, token, true)
 
-        res.send( token ).status(201);
+        res.send(token).status(201);
 
     } catch (error) {
         console.log(error)

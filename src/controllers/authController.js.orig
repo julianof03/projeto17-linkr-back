@@ -8,7 +8,7 @@ import { authRepository } from '../repositories/authRepositories.js'
 dotenv.config();
 
 export async function signUp(req, res) {
-
+    console.log("entrei Aqui");
     try {
         const { email, password, name, pictureUrl } = req.body;
 
@@ -53,7 +53,11 @@ export async function signIn(req, res) {
 
         const token = jwt.sign({ userId: user.rows[0].id }, secretKey, config);
         const userId = user.rows[0].id
+<<<<<<< HEAD
+        // await connection.query('INSERT INTO sessions ("userId", token, "isValid") values ($1, $2, $3) ', [user.id, tokenJWT, true])
+=======
 
+>>>>>>> main
         await authRepository.signIn(userId, token, true)
 
         res.status(201).send({userId, token});
@@ -70,6 +74,18 @@ export async function signOut(req, res) {
 
     try {
 
+<<<<<<< HEAD
+        // await connection.query(`
+        //         UPDATE 
+        //             sessions
+        //         SET 
+        //         "isValid"=false
+        //         WHERE
+        //         "userId" = $1 AND token =$2
+        //         ;`, [userId, token]);
+
+=======
+>>>>>>> main
         await authRepository.signOut(userId, token)
 
 

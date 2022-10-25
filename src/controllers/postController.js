@@ -14,8 +14,14 @@ async function CreatePost(req, res) {
   });
 
   try {
-
+    // bloco insert post + like
+    const liked = false
     await postRepository.insertPost(userId, text, link)
+    const getPost = await connection.query(`
+    SELECT * FROM posts 
+    WHERE posts."userId" = $1`, [userId])
+    const postId = (getPost.rows[(getPost.rows.length-1)].id)
+    await postRepository.insertLike(userId, postId, liked)
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
@@ -54,9 +60,10 @@ async function GetPost(req, res) {
       posts."createdAt"
       FROM posts
       JOIN users ON posts."userId" = users.id
-      JOIN likes ON users.id = likes."userId"
+      JOIN likes ON posts.id = likes."postId"
       ORDER BY posts."createdAt" DESC`
   );
+  console.log(getPosts.rows)
 
   const getCount = await connection.query(
     `SELECT
@@ -68,27 +75,32 @@ async function GetPost(req, res) {
 
   const ArrayPost = getPosts;
   const ArrayCount = getCount;
+  // console.log(ArrayPost.rows)
 
   let i = 0;
   const BodyArray = [];
-  getPosts.rows.map((p) => {
+  getPosts.rows.map((value, index) => {
+
     if (i > getPosts.rowCount) return;
     let j = 0;
     getCount.rows.map(() => {
+
       if (getCount.rows[j].postId === getPosts.rows[i].postId) {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
           likesQtd: parseInt(getCount.rows[j].count),
           liked: getPosts.rows[i].liked,
-        });
+        })
       } else {
         BodyArray.push({
+          postId: getPosts.rows[i].postId,
           username: getPosts.rows[i].name,
-          userId: getPosts.rows[i].userId,
+          postUserId: getPosts.rows[i].userId,
           img: getPosts.rows[i].pictureUrl,
           text: getPosts.rows[i].text,
           link: getPosts.rows[i].link,
@@ -97,28 +109,20 @@ async function GetPost(req, res) {
         });
       }
       j++;
-    });
+    }); 
     i++;
   });
+  // console.log(BodyArray)
   res.status(201).send(BodyArray);
 }
 
 async function EditPost(req, res) {
   const { id } = req.params;
-  const { link, text } = req.body;
-  let textMessage,
-    linkMessage = "";
+  const { text } = req.body;
+  let textMessage = "";
 
   try {
     const getPosts = await connection.query("SELECT * FROM posts WHERE id = $1", [id]);
-
-    if (link) {
-      linkMessage = " Link";
-      const updateLink = await connection.query("UPDATE posts SET link = $1 WHERE id = $2", [
-        link,
-        id,
-      ]);
-    }
     if (text) {
       textMessage = " Texto";
       const updateText = await connection.query("UPDATE posts SET text = $1 WHERE id = $2", [
@@ -126,8 +130,8 @@ async function EditPost(req, res) {
         id,
       ]);
     }
-
-    res.status(201).send({ message: `foram atualizados:${linkMessage} ${textMessage}` });
+    console.log("vou atualizar o:", id);
+    res.status(201).send({ message: `foram atualizados: ${textMessage}` });
   } catch (error) {
     res.status(404).send({ message: "url não encontrado" });
   }
@@ -152,4 +156,20 @@ async function insertHashPost(hashtagId, userId, text, link) {
   ]);
 }
 
-export { CreatePost, EditPost, DeletePost, GetPost };
+async function updateLike(req, res) {
+  const { userId, postId } = req.body
+
+  try {
+
+
+
+
+    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
+
+    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
+
+  } catch (error) {
+    res.status(501).send({ message: error.message });
+  }
+}
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike };

@@ -49,27 +49,32 @@ async function CreatePost(req, res) {
 
 async function GetPost(req, res) {
 
-
-  const getPosts = await connection.query(
-    `SELECT 
-      posts.id AS "postId",
-      posts.text,
-      posts.link,
-      users.name AS "username",
-      users.id AS "userId",
-      users."pictureUrl" AS "userImg",
-      "likesQtd",
-      posts."createdAt"
-      FROM posts
-      JOIN users ON posts."userId" = users.id
-      JOIN (SELECT
-        likes."postId",
-        COUNT(likes."postId")-1 as "likesQtd"
-        FROM likes
-        GROUP BY likes."postId") l ON posts.id = l."postId"
-      ORDER BY posts."createdAt" DESC`
-  )/* l.liked */
-  res.status(201).send(getPosts.rows);
+  try {
+    const getPosts = await connection.query(
+      `SELECT 
+        posts.id AS "postId",
+        posts.text,
+        posts.link,
+        users.name AS "username",
+        users.id AS "userId",
+        users."pictureUrl" AS "userImg",
+        "likesQtd",
+        posts."createdAt"
+        FROM posts
+        JOIN users ON posts."userId" = users.id
+        JOIN (
+          SELECT
+          likes."postId",
+          COUNT(likes."postId")-1 as "likesQtd"
+          FROM likes
+          GROUP BY likes."postId") l ON posts.id = l."postId"
+        ORDER BY posts."createdAt" DESC`
+    )
+    res.status(201).send(getPosts.rows);
+  } catch (error) {
+    res.sendStatus(500)
+  }
+  
 }
 
 async function GetPostByUserId(req, res) {

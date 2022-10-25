@@ -5,6 +5,7 @@ import { postRepository } from '../repositories/postRepositories.js'
 async function CreatePost(req, res) {
   const { text, link } = req.body;
   const { userId } = res.locals
+  console.log('createPost')
 
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
@@ -48,6 +49,8 @@ async function CreatePost(req, res) {
 }
 
 async function GetPost(req, res) {
+  console.log('getPosts.rows')
+
   const getPosts = await connection.query(
     `SELECT 
       posts.id AS "postId",
@@ -63,7 +66,6 @@ async function GetPost(req, res) {
       JOIN likes ON posts.id = likes."postId"
       ORDER BY posts."createdAt" DESC`
   );
-  console.log(getPosts.rows)
 
   const getCount = await connection.query(
     `SELECT

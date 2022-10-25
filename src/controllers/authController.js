@@ -72,7 +72,7 @@ export async function signOut(req, res) {
         await authRepository.signOut(userId, token)
 
 
-        return res.redirect('/login');
+        return res.sendStatus(200);
     } catch (error) {
         console.log(error.message)
         return res.sendStatus(500);

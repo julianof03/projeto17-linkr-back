@@ -18,16 +18,6 @@ export async function userInfo(req, res) {
     const userId = res.locals.userId;
 
     try {
-        // const user = await connection.query(`
-        // SELECT
-        //     "pictureUrl"
-        // FROM
-        //     users
-        // WHERE
-        //     id =$1
-        // LIMIT
-        // 1`, [userId]);
-
         const user = await usersRepository.getPicture(userId)
 
         return res.status(200).send(user.rows[0].pictureUrl);
@@ -36,3 +26,4 @@ export async function userInfo(req, res) {
         res.status(501).send({ message: error.message });
     }
 };
+

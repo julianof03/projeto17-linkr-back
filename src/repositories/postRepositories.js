@@ -4,12 +4,12 @@ async function insertPost(userId, text, link) {
     const query = `INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)`
 
     return connection.query(query, [userId, text, link])
-   
+
 }
 async function insertLike(userId, postId, liked) {
     const query = `INSERT INTO likes ( "userId", "postId", liked) VALUES ($1, $2, $3)`
-    return connection.query(query, [userId, postId,liked])
-   
+    return connection.query(query, [userId, postId, liked])
+
 }
 
 async function getHashtagIdByName(atual) {
@@ -19,8 +19,8 @@ async function getHashtagIdByName(atual) {
 }
 
 async function getPostId(userId, text, link) {
-    
-    const query =  'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 ORDER BY "createdAt" DESC LIMIT 1'
+
+    const query = 'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 ORDER BY "createdAt" DESC LIMIT 1'
     return connection.query(query, [userId, text, link])
 }
 
@@ -32,7 +32,7 @@ async function insertHashtag(atual) {
 // 
 
 
-async function deletePost(id){
+async function deletePost(id) {
     const query = `DELETE FROM posts WHERE id = $1`
     return connection.query(query, [id])
 
@@ -48,7 +48,7 @@ const postRepository = {
 
 
     deletePost
-    
+
 
 }
 

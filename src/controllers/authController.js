@@ -8,7 +8,6 @@ import { authRepository } from '../repositories/authRepositories.js'
 dotenv.config();
 
 export async function signUp(req, res) {
-    console.log("entrei Aqui");
     try {
         const { email, password, name, pictureUrl } = req.body;
 

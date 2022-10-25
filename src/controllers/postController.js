@@ -63,7 +63,7 @@ async function GetPost(req, res) {
       JOIN likes ON posts.id = likes."postId"
       ORDER BY posts."createdAt" DESC`
   );
-  console.log(getPosts.rows)
+  // console.log(getPosts.rows)
 
   const getCount = await connection.query(
     `SELECT

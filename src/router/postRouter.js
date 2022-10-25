@@ -10,7 +10,7 @@ import express from "express";
 const router = express.Router();
 
 router.post('/timeline', loggedUser, schemaValidation(postSchema), CreatePost);
-router.get('/timeline',loggedUser,GetPost);
+router.get('/timeline',GetPost);
 router.post('/timeline/:id', validateCreatePostSchema, EditPost);
 router.delete('/timeline/:id', validateCreatePostSchema, DeletePost);
 

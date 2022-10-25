@@ -13,7 +13,6 @@ async function insertLike(userId, postId, liked) {
 }
 
 async function getHashtagIdByName(atual) {
-    console.log("entrei")
     const query = "SELECT (id) from hashtags WHERE name = $1"
     return connection.query(query, [atual])
 }

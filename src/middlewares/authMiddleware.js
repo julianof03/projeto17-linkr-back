@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import {connection} from '../database/database.js'
 
 export function validateSignUp(req, res, next) {
-    console.log("entrei aqui")
     const customer = req.body;
 
     const { error } = signUpSchema.validate(customer, { abortEarly: false });
@@ -33,7 +32,6 @@ export function validateSignIn(req, res, next) {
 };
 
 export async function loggedUser(req, res, next) {
-    console.log('logged user')
     const authorization = req.headers.authorization;
 
     if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
@@ -43,8 +41,6 @@ export async function loggedUser(req, res, next) {
 
     const token = authorization.replace('Bearer ', '');
     let userId;
-    console.log(req.headers);
-    console.log(token);
     try {
         const verification = jwt.verify(token, process.env.TOKEN_SECRET);
         userId = verification.userId;

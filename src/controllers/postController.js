@@ -5,7 +5,6 @@ import { postRepository } from '../repositories/postRepositories.js'
 async function CreatePost(req, res) {
   const { text, link } = req.body;
   const { userId } = res.locals
-  console.log('createPost')
 
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
@@ -49,73 +48,101 @@ async function CreatePost(req, res) {
 }
 
 async function GetPost(req, res) {
-  console.log('getPosts.rows')
 
+  // const getPosts = await connection.query(
+  //   `SELECT 
+  //     posts.id AS "postId",
+  //     posts.text,
+  //     posts.link,
+  //     users.name,
+  //     users.id AS "userId",
+  //     users."pictureUrl",
+  //     likes.liked,
+  //     posts."createdAt"
+  //     FROM posts
+  //     JOIN users ON posts."userId" = users.id
+  //     JOIN likes ON posts.id = likes."postId"
+  //     ORDER BY posts."createdAt" DESC`
+  // );
+
+  // const getCount = await connection.query(
+  //   `SELECT
+  //     likes."postId",
+  //     COUNT(likes."postId") as "count"
+  //     FROM likes
+  //     GROUP BY likes."postId"`
+  // );
+
+
+
+  // const ArrayPost = getPosts;
+  // const ArrayCount = getCount;
+
+  // let i = 0;
+  // const BodyArray = [];
+  // getPosts.rows.map((value, index) => {
+
+  //   if (i > getPosts.rowCount) return;
+  //   let j = 0;
+  //   getCount.rows.map(() => {
+
+  //     if (getCount.rows[j].postId === getPosts.rows[i].postId) {
+  //       BodyArray.push({
+  //         postId: getPosts.rows[i].postId,
+  //         username: getPosts.rows[i].name,
+  //         postUserId: getPosts.rows[i].userId,
+  //         img: getPosts.rows[i].pictureUrl,
+  //         text: getPosts.rows[i].text,
+  //         link: getPosts.rows[i].link,
+  //         likesQtd: parseInt(getCount.rows[j].count),
+  //         liked: getPosts.rows[i].liked,
+  //       })
+  //     } else {
+  //       BodyArray.push({
+  //         postId: getPosts.rows[i].postId,
+  //         username: getPosts.rows[i].name,
+  //         postUserId: getPosts.rows[i].userId,
+  //         img: getPosts.rows[i].pictureUrl,
+  //         text: getPosts.rows[i].text,
+  //         link: getPosts.rows[i].link,
+  //         likesQtd: 0,
+  //         liked: getPosts.rows[i].liked,
+  //       });
+  //     }
+  //     j++;
+  //   }); 
+  //   i++;
+  // });
+
+  // postId
+  // username 
+  // userId
+  // img (pictureUrl)
+  // postUserId
+  // text 
+  // link 
+  // likesqtd
+  // liked
   const getPosts = await connection.query(
     `SELECT 
       posts.id AS "postId",
       posts.text,
       posts.link,
-      users.name,
+      users.name AS "username",
       users.id AS "userId",
-      users."pictureUrl",
-      likes.liked,
+      users."pictureUrl" AS "userImg",
+      l.liked,
       posts."createdAt"
       FROM posts
       JOIN users ON posts."userId" = users.id
-      JOIN likes ON posts.id = likes."postId"
+      JOIN (SELECT
+        likes."postId",
+        COUNT(likes."postId")-1 as "liked"
+        FROM likes
+        GROUP BY likes."postId") l ON posts.id = l."postId"
       ORDER BY posts."createdAt" DESC`
-  );
-
-  const getCount = await connection.query(
-    `SELECT
-      likes."postId",
-      COUNT(likes."postId") as "count"
-      FROM likes
-      GROUP BY likes."postId"`
-  );
-
-  const ArrayPost = getPosts;
-  const ArrayCount = getCount;
-  // console.log(ArrayPost.rows)
-
-  let i = 0;
-  const BodyArray = [];
-  getPosts.rows.map((value, index) => {
-
-    if (i > getPosts.rowCount) return;
-    let j = 0;
-    getCount.rows.map(() => {
-
-      if (getCount.rows[j].postId === getPosts.rows[i].postId) {
-        BodyArray.push({
-          postId: getPosts.rows[i].postId,
-          username: getPosts.rows[i].name,
-          postUserId: getPosts.rows[i].userId,
-          img: getPosts.rows[i].pictureUrl,
-          text: getPosts.rows[i].text,
-          link: getPosts.rows[i].link,
-          likesQtd: parseInt(getCount.rows[j].count),
-          liked: getPosts.rows[i].liked,
-        })
-      } else {
-        BodyArray.push({
-          postId: getPosts.rows[i].postId,
-          username: getPosts.rows[i].name,
-          postUserId: getPosts.rows[i].userId,
-          img: getPosts.rows[i].pictureUrl,
-          text: getPosts.rows[i].text,
-          link: getPosts.rows[i].link,
-          likesQtd: 0,
-          liked: getPosts.rows[i].liked,
-        });
-      }
-      j++;
-    }); 
-    i++;
-  });
-  // console.log(BodyArray)
-  res.status(201).send(BodyArray);
+  )
+  res.status(201).send(getPosts.rows);
 }
 
 async function EditPost(req, res) {
@@ -132,7 +159,6 @@ async function EditPost(req, res) {
         id,
       ]);
     }
-    console.log("vou atualizar o:", id);
     res.status(201).send({ message: `foram atualizados: ${textMessage}` });
   } catch (error) {
     res.status(404).send({ message: "url não encontrado" });

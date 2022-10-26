@@ -43,7 +43,7 @@ async function CreatePost(req, res) {
     return res.sendStatus(201);
   } catch (error) {
     console.log(error);
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -103,7 +103,6 @@ async function GetPostByUserId(req, res) {
   )
   res.status(201).send(getPosts.rows);
 }
-
 async function EditPost(req, res) {
   const { id } = req.params;
   const { text } = req.body;

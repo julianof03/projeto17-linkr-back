@@ -2,32 +2,27 @@ import { connection } from "../database/database.js";
 
 async function getPostsHashtag(hashtag) {
   const postsHashtags = `SELECT 
-    posts.id AS "postId",
-    posts.text,
-    posts.link,
-    users.name,
-    users.id AS "userId",
-    users."pictureUrl",
-    likes.liked,
-    posts."createdAt"
-    FROM posts
-    JOIN users ON posts."userId" = users.id
-    JOIN likes ON users.id = likes."userId"
-    JOIN "hashPost" ON "hashPost"."postId" = posts.id
-    JOIN hashtags ON "hashPost"."hashtagId" = hashtags.id
+  posts.id AS "postId",
+  posts.text,
+  posts.link,
+  users.name AS "username",
+  users.id AS "userId",
+  users."pictureUrl" AS "userImg",
+  "likesQtd",
+  posts."createdAt"
+  FROM posts
+  JOIN users ON posts."userId" = users.id
+  JOIN "hashPost" ON "hashPost"."postId" = posts.id
+  JOIN hashtags ON "hashPost"."hashtagId" = hashtags.id
+  JOIN (
+    SELECT
+    likes."postId",
+    COUNT(likes."postId")-1 as "likesQtd"
+    FROM likes
+    GROUP BY likes."postId") l ON posts.id = l."postId"
     WHERE hashtags.name = $1
-    ORDER BY posts."createdAt" DESC`;
+  ORDER BY posts."createdAt" DESC`
   return connection.query(postsHashtags, [hashtag]);
-}
-
-async function getLikesHashtag() {
-  const countLikesHashtag = `SELECT
-      likes."postId",
-      COUNT(likes."postId") as "count"
-      FROM likes
-      GROUP BY likes."postId"`;
-
-  return connection.query(countLikesHashtag);
 }
 
 async function getTrending() {
@@ -37,7 +32,6 @@ async function getTrending() {
 
 const hashtagRepository = {
   getPostsHashtag,
-  getLikesHashtag,
   getTrending
 };
 

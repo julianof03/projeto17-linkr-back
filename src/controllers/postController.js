@@ -186,7 +186,6 @@ async function GetPostByUserId(req, res) {
     res.sendStatus(500);
   }
 }
-
 async function EditPost(req, res) {
   const { id } = req.params;
   const { text } = req.body;

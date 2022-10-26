@@ -20,7 +20,7 @@ async function CreatePost(req, res) {
     const getPost = await connection.query(`
     SELECT * FROM posts 
     WHERE posts."userId" = $1`, [userId])
-    const postId = (getPost.rows[(getPost.rows.length-1)].id)
+    const postId = (getPost.rows[(getPost.rows.length - 1)].id)
     await postRepository.insertLike(userId, postId, liked)
 
     if (hashtagsArray.length !== 0) {
@@ -43,7 +43,7 @@ async function CreatePost(req, res) {
     return res.sendStatus(201);
   } catch (error) {
     console.log(error);
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -74,7 +74,7 @@ async function GetPost(req, res) {
   } catch (error) {
     res.sendStatus(500)
   }
-  
+
 }
 
 async function GetPostByUserId(req, res) {
@@ -131,7 +131,7 @@ async function DeletePost(req, res) {
     await postRepository.deletePost(id);
     res.status(204).send({ message: "menssagem deletada" });
   } catch (error) {
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -144,19 +144,20 @@ async function insertHashPost(hashtagId, userId, text, link) {
 }
 
 async function updateLike(req, res) {
-  const { userId, postId } = req.body
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
 
+  // FAZER AUTHORIZATION
   try {
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
 
-
-
-
-    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
-
-    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
-
+    console.log(userId, postId)
+    await connection.query('INSERT INTO likes ("userId", "postId") VALUES ($1, $2)', [userId, postId])
+  
+    res.sendStatus(200)
   } catch (error) {
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
-export { CreatePost, EditPost, DeletePost, GetPost, updateLike,GetPostByUserId };
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike, GetPostByUserId };

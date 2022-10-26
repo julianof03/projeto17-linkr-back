@@ -91,7 +91,6 @@ async function GetPost(req, res) {
         likes l
       WHERE
           l."userId" = $1
-
       GROUP BY
         l."postId"	   
 	   
@@ -153,6 +152,7 @@ async function GetPostByUserId(req, res) {
   const loggedUserId = res.locals.userId
 
   try {
+
     const getPosts = await connection.query(
       `SELECT
         users.name AS "username",
@@ -185,8 +185,10 @@ async function GetPostByUserId(req, res) {
     console.error(error);
     res.sendStatus(500);
   }
+  
 }
 async function EditPost(req, res) {
+
   const { id } = req.params;
   const { text } = req.body;
   let textMessage = "";
@@ -207,22 +209,28 @@ async function EditPost(req, res) {
 }
 
 async function DeletePost(req, res) {
+
   const { id } = req.params;
+
   try {
     // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
     await postRepository.deletePost(id);
+
     res.status(204).send({ message: "menssagem deletada" });
+
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
 async function insertHashPost(hashtagId, userId, text, link) {
+
   const postId = await postRepository.getPostId(userId, text, link);
   await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
     postId.rows[0].id,
     hashtagId,
   ]);
+
 }
 
 async function updateLike(req, res) {
@@ -230,32 +238,8 @@ async function updateLike(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
 
   try {
-    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [
-      token,
-    ]);
-    const userId = session.rows[0].userId;
-
-    console.log(userId, postId);
-    await connection.query('INSERT INTO likes ("userId", "postId") VALUES ($1, $2)', [
-      userId,
-      postId,
-    ]);
-
-    res.sendStatus(200);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-}
-
-async function updateDisLike(req, res) {
-  const { postId } = req.body;
-  const token = req.headers.authorization?.replace("Bearer ", "");
-
-  try {
-    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [
-      token,
-    ]);
-    const userId = session.rows[0].userId;
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
 
     console.log(userId, postId);
     await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
@@ -296,14 +280,8 @@ async function getAlertNewPosts(req, res) {
   }
 }
 
-export {
-  CreatePost,
-  EditPost,
-  DeletePost,
-  GetPost,
-  updateLike,
-  updateDisLike,
-  GetPostByUserId,
-  getAlertNewPosts,
-  CreateRepost,
-};
+export { 
+  CreatePost, EditPost, 
+  DeletePost, GetPost, 
+  updateLike, GetPostByUserId,
+  getAlertNewPosts, CreateRepost };

@@ -5,7 +5,6 @@ import {
   GetPost,
   GetPostByUserId,
   updateLike,
-  updateDisLike,
   getAlertNewPosts,
   CreateRepost,
 } from "../controllers/postController.js";
@@ -25,6 +24,5 @@ router.get("/users/:id", loggedUser, GetPostByUserId);
 router.post("/share", loggedUser, CreateRepost);
 router.get("/timeline/getalertnewposts", getAlertNewPosts);
 router.put("/timeline/likeUpdate", updateLike);
-router.put("/timeline/dislikeUpdate", updateDisLike);
 
 export default router;

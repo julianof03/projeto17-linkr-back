@@ -159,4 +159,5 @@ async function updateLike(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
+
 export { CreatePost, EditPost, DeletePost, GetPost, updateLike,GetPostByUserId };

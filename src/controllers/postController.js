@@ -84,7 +84,6 @@ async function GetPost(req, res) {
         likes l
       WHERE
           l."userId" = $1
-
       GROUP BY
         l."postId"	   
 	   
@@ -143,6 +142,7 @@ async function GetPostByUserId(req, res) {
   const userId = req.params.id
 
   try {
+
     const getPosts = await connection.query(
       `SELECT 
         posts.id AS "postId",
@@ -163,7 +163,6 @@ async function GetPostByUserId(req, res) {
           WHERE users.id = $1
         ORDER BY posts."createdAt" DESC`, [userId]
     )
-    // console.log('GETPOSTS :', getPosts.rows)
     res.status(201).send(getPosts.rows);
 
   } catch (error) {
@@ -171,8 +170,10 @@ async function GetPostByUserId(req, res) {
     res.sendStatus(500)
 
   }
+  
 }
 async function EditPost(req, res) {
+
   const { id } = req.params;
   const { text } = req.body;
   let textMessage = "";
@@ -193,22 +194,28 @@ async function EditPost(req, res) {
 }
 
 async function DeletePost(req, res) {
+
   const { id } = req.params;
+
   try {
     // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
     await postRepository.deletePost(id);
+
     res.status(204).send({ message: "menssagem deletada" });
+
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
 async function insertHashPost(hashtagId, userId, text, link) {
+
   const postId = await postRepository.getPostId(userId, text, link);
   await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
     postId.rows[0].id,
     hashtagId,
   ]);
+
 }
 
 async function updateLike(req, res) {
@@ -217,23 +224,8 @@ async function updateLike(req, res) {
 
   try {
 
-    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
-    const userId = session.rows[0].userId
+    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
 
-    console.log(userId, postId)
-    await connection.query('INSERT INTO likes ("userId", "postId") VALUES ($1, $2)', [userId, postId])
-
-    res.sendStatus(200)
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-}
-
-async function updateDisLike(req, res) {
-  const { postId } = req.body
-  const token = req.headers.authorization?.replace('Bearer ', '')
-
-  try {
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
@@ -275,5 +267,5 @@ async function getAlertNewPosts(req, res){
 export { 
   CreatePost, EditPost, 
   DeletePost, GetPost, 
-  updateLike,updateDisLike, GetPostByUserId,
+  updateLike, GetPostByUserId,
   getAlertNewPosts, CreateRepost };

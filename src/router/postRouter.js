@@ -1,7 +1,8 @@
 import {
     CreatePost, EditPost,
     DeletePost, GetPost,
-    GetPostByUserId, updateLike
+    GetPostByUserId, updateLike,
+    updateDisLike
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";
@@ -17,5 +18,6 @@ router.post('/timeline/:id', validateCreatePostSchema, EditPost);
 router.delete('/timeline/:id', validateCreatePostSchema, DeletePost);
 router.get("/users/:id",/* loggedUser, */ GetPostByUserId);
 router.put("/timeline/likeUpdate", updateLike)
+router.put("/timeline/dislikeUpdate", updateDisLike)
 
 export default router;

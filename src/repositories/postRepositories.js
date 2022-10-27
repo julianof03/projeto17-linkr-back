@@ -6,9 +6,9 @@ async function insertPost(userId, text, link) {
     return connection.query(query, [userId, text, link])
 
 }
-async function insertLike(userId, postId, liked) {
-    const query = `INSERT INTO likes ( "userId", "postId", liked) VALUES ($1, $2, $3)`
-    return connection.query(query, [userId, postId, liked])
+async function insertLike(userId, postId) {
+    const query = `INSERT INTO likes ( "userId", "postId") VALUES ($1, $2)`
+    return connection.query(query, [userId, postId])
 
 }
 

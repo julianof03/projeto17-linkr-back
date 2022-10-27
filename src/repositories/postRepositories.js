@@ -9,7 +9,6 @@ async function insertPost(userId, text, link) {
 async function insertLike(userId, postId) {
     const query = `INSERT INTO likes ( "userId", "postId") VALUES ($1, $2)`
     return connection.query(query, [userId, postId])
-
 }
 
 async function getHashtagIdByName(atual) {
@@ -28,27 +27,24 @@ async function insertHashtag(atual) {
     return connection.query(query, [atual])
 }
 
-// 
-
-
 async function deletePost(id) {
     const query = `DELETE FROM posts WHERE id = $1`
     return connection.query(query, [id])
 
 }
 
+async function insertRepost(postId, userId) {
+    const query = `INSERT INTO repost ("postId", "userId") VALUES ($1, $2)`
+    return connection.query(query, [postId, userId])
+}
 const postRepository = {
     insertPost,
     getHashtagIdByName,
     getPostId,
     insertHashtag,
     insertLike,
-
-
-
+    insertRepost,
     deletePost
-
-
 }
 
 export { postRepository }

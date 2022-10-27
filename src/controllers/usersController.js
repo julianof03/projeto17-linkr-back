@@ -10,7 +10,7 @@ export async function searchUsers(req, res) {
         return res.status(200).send(users.rows)
 
     } catch (error) {
-        res.status(501).send({ message: error.message });
+        res.status(500).send({ message: error.message });
     }
 };
 
@@ -23,7 +23,7 @@ export async function userInfo(req, res) {
         return res.status(200).send(user.rows[0].pictureUrl);
 
     } catch (error) {
-        res.status(501).send({ message: error.message });
+        res.status(500).send({ message: error.message });
     }
 };
 

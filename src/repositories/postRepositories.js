@@ -37,18 +37,18 @@ async function deletePost(id) {
 
 }
 
+async function insertRepost(postId, userId) {
+    const query = `INSERT INTO repost ("postId", "userId") VALUES ($1, $2)`
+    return connection.query(query, [postId, userId])
+}
 const postRepository = {
     insertPost,
     getHashtagIdByName,
     getPostId,
     insertHashtag,
     insertLike,
-
-
-
+    insertRepost,
     deletePost
-
-
 }
 
 export { postRepository }

@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import { connection } from "../database/database.js";
-import { postRepository } from '../repositories/postRepositories.js'
+import { postRepository } from "../repositories/postRepositories.js";
 
 async function CreatePost(req, res) {
   const { text, link } = req.body;
-  const { userId } = res.locals
+  const { userId } = res.locals;
 
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
@@ -15,13 +15,16 @@ async function CreatePost(req, res) {
 
   try {
     // bloco insert post + like
-    const liked = false
-    await postRepository.insertPost(userId, text, link)
-    const getPost = await connection.query(`
+    const liked = false;
+    await postRepository.insertPost(userId, text, link);
+    const getPost = await connection.query(
+      `
     SELECT * FROM posts 
-    WHERE posts."userId" = $1`, [userId])
-    const postId = (getPost.rows[(getPost.rows.length-1)].id)
-    await postRepository.insertLike(userId, postId, liked)
+    WHERE posts."userId" = $1`,
+      [userId]
+    );
+    const postId = getPost.rows[getPost.rows.length - 1].id;
+    await postRepository.insertLike(userId, postId, liked);
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
@@ -37,7 +40,7 @@ async function CreatePost(req, res) {
         await postRepository.insertHashtag(atual);
         const newHashtagId = await postRepository.getHashtagIdByName(atual);
         hashtagId = newHashtagId.rows[0].id;
-        await insertHashPost(hashtagId, userId, text, link)
+        await insertHashPost(hashtagId, userId, text, link);
       }
     }
     return res.sendStatus(201);
@@ -48,7 +51,6 @@ async function CreatePost(req, res) {
 }
 
 async function GetPost(req, res) {
-
   try {
     const getPosts = await connection.query(
       `SELECT 
@@ -69,17 +71,16 @@ async function GetPost(req, res) {
           FROM likes
           GROUP BY likes."postId") l ON posts.id = l."postId"
         ORDER BY posts."createdAt" DESC`
-    )
+    );
     res.status(201).send(getPosts.rows);
   } catch (error) {
-    res.sendStatus(500)
+    res.sendStatus(500);
   }
-  
 }
 
 async function GetPostByUserId(req, res) {
-  const userId = req.params.id
-  console.log(userId)
+  const userId = req.params.id;
+  console.log(userId);
 
   const getPosts = await connection.query(
     `SELECT 
@@ -99,8 +100,9 @@ async function GetPostByUserId(req, res) {
         FROM likes
         GROUP BY likes."postId") l ON posts.id = l."postId"
         WHERE users.id = $1
-      ORDER BY posts."createdAt" DESC`, [userId]
-  )
+      ORDER BY posts."createdAt" DESC`,
+    [userId]
+  );
   res.status(201).send(getPosts.rows);
 }
 
@@ -144,19 +146,28 @@ async function insertHashPost(hashtagId, userId, text, link) {
 }
 
 async function updateLike(req, res) {
-  const { userId, postId } = req.body
+  const { userId, postId } = req.body;
 
   try {
+    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id]);
 
-
-
-
-    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
-
-    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
-
+    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [
+      userId,
+      postId,
+    ]);
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
 }
-export { CreatePost, EditPost, DeletePost, GetPost, updateLike,GetPostByUserId };
+
+async function CreateRepost(req, res) {
+  const { postId, userId } = req.body;
+
+  try {
+    await postRepository.insertRepost(postId, userId);
+    res.sendStatus(200)
+  } catch (error) {
+    res.status(501).send({ message: error.message });
+  }
+}
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike, GetPostByUserId, CreateRepost };

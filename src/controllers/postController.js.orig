@@ -139,11 +139,8 @@ async function GetPost(req, res) {
 
 }
 
-<<<<<<< HEAD
 async function GetPostByUserId(req, res) {
-
   const userId = req.params.id
-  console.log('oi', userId)
 
   try {
     const getPosts = await connection.query(
@@ -174,6 +171,42 @@ async function GetPostByUserId(req, res) {
     res.sendStatus(500)
 
   }
+}
+
+<<<<<<< HEAD
+async function GetPostByUserId(req, res) {
+
+  const userId = req.params.id
+  console.log('oi', userId)
+
+  try{
+  const getPosts = await connection.query(
+    `SELECT 
+      posts.id AS "postId",
+      posts.text,
+      posts.link,
+      users.name AS "username",
+      users.id AS "userId",
+      users."pictureUrl" AS "userImg",
+      l.liked,
+      posts."createdAt"
+      FROM posts
+      JOIN users ON posts."userId" = users.id
+      JOIN (SELECT
+        likes."postId",
+        COUNT(likes."postId")-1 as "liked"
+        FROM likes
+        GROUP BY likes."postId") l ON posts.id = l."postId"
+        WHERE users.id = $1
+      ORDER BY posts."createdAt" DESC`,
+    [userId]
+  );
+        console.log(getPosts)
+  res.status(201).send(getPosts.rows);
+      } catch(error){
+        console.log('aqui ó')
+        res.status(404).send({ message: "url não encontrado" });
+      }
 }
 
 =======

@@ -1,5 +1,5 @@
 import { CreatePost, EditPost,
-         DeletePost, GetPost, GetPostByUserId } from "../controllers/postController.js";
+         DeletePost, GetPost, GetPostByUserId, getAlertNewPosts } from "../controllers/postController.js";
 import { validateCreatePostSchema,
           } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";
@@ -14,7 +14,6 @@ router.get('/timeline',GetPost);
 router.post('/timeline/:id', validateCreatePostSchema, EditPost);
 router.delete('/timeline/:id', validateCreatePostSchema, DeletePost);
 router.get("/users/:id",/* loggedUser, */ GetPostByUserId);
-
-
+router.get("/timeline/getalertnewposts", getAlertNewPosts)
 
 export default router;

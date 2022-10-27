@@ -34,9 +34,7 @@ export function validateSignIn(req, res, next) {
 export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
     
-
-    if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
-
+    if (!authorization || authorization.slice(0, 7) !== 'Bearer '){
         return res.sendStatus(401);
     };
 
@@ -69,10 +67,10 @@ export async function loggedUser(req, res, next) {
         };
         res.locals.userId = userId;
         res.locals.token = token;
+
         next();
 
     } catch (error) {
-        console.log('to inválido', userId)
         res.sendStatus(error);
     }
 };

@@ -139,34 +139,39 @@ async function GetPost(req, res) {
 
 }
 
-<<<<<<< HEAD
 async function GetPostByUserId(req, res) {
 
   const userId = req.params.id
-  console.log('oi', userId)
+  const loggedUserId = res.locals.userId
 
   try {
     const getPosts = await connection.query(
-      `SELECT 
-        posts.id AS "postId",
-        posts.text,
-        posts.link,
+      `SELECT
         users.name AS "username",
         users.id AS "userId",
         users."pictureUrl" AS "userImg",
+        posts.id AS "postId",
+        posts.text,
+        posts.link,
+        posts."createdAt",
         l.liked,
-        posts."createdAt"
-        FROM posts
-        JOIN users ON posts."userId" = users.id
-        JOIN (SELECT
-          likes."postId",
-          COUNT(likes."postId")-1 as "liked"
-          FROM likes
-          GROUP BY likes."postId") l ON posts.id = l."postId"
-          WHERE users.id = $1
-        ORDER BY posts."createdAt" DESC`, [userId]
+        f.follows AS "isFollowing"
+      FROM users
+      LEFT JOIN posts ON posts."userId" = users.id
+      LEFT JOIN (SELECT
+        likes."postId",
+        COUNT(likes."postId")-1 as "liked"
+        FROM likes
+        GROUP BY likes."postId") l ON posts.id = l."postId"
+      LEFT JOIN(SELECT
+        follows 
+        from follow f
+        WHERE
+        f.follows = $1 AND f."userId" = $2) f ON f.follows = users.id
+      WHERE users.id =$1
+      ORDER BY posts."createdAt"`, [userId, loggedUserId]
     )
-    // console.log('GETPOSTS :', getPosts.rows)
+    //console.log('GETPOSTS :', getPosts.rows)
     res.status(201).send(getPosts.rows);
 
   } catch (error) {
@@ -176,8 +181,6 @@ async function GetPostByUserId(req, res) {
   }
 }
 
-=======
->>>>>>> main
 async function EditPost(req, res) {
   const { id } = req.params;
   const { text } = req.body;

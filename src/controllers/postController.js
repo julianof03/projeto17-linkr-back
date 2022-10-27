@@ -46,7 +46,7 @@ async function CreatePost(req, res) {
     return res.sendStatus(201);
   } catch (error) {
     console.log(error);
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -71,7 +71,8 @@ async function GetPost(req, res) {
           FROM likes
           GROUP BY likes."postId") l ON posts.id = l."postId"
         ORDER BY posts."createdAt" DESC`
-    );
+    )
+    // console.log('GETPOSTS :', getPosts.rows)
     res.status(201).send(getPosts.rows);
   } catch (error) {
     res.sendStatus(500);
@@ -79,8 +80,7 @@ async function GetPost(req, res) {
 }
 
 async function GetPostByUserId(req, res) {
-  const userId = req.params.id;
-  console.log(userId);
+  const userId = req.params.id
 
   const getPosts = await connection.query(
     `SELECT 
@@ -133,7 +133,7 @@ async function DeletePost(req, res) {
     await postRepository.deletePost(id);
     res.status(204).send({ message: "menssagem deletada" });
   } catch (error) {
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -149,14 +149,12 @@ async function updateLike(req, res) {
   const { userId, postId } = req.body;
 
   try {
-    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id]);
+    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
 
-    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [
-      userId,
-      postId,
-    ]);
+    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
+
   } catch (error) {
-    res.status(501).send({ message: error.message });
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -170,4 +168,24 @@ async function CreateRepost(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-export { CreatePost, EditPost, DeletePost, GetPost, updateLike, GetPostByUserId, CreateRepost };
+async function getAlertNewPosts(req, res){
+  const {createdAt} = req.body
+  // console.log('CREATEAD :', req.body)
+  try {
+    const {rows: posts} = await connection.query(`
+                            SELECT * FROM posts
+                            WHERE posts."createdAt" > $1
+                          `, [createdAt])
+    return res.status(200).send((posts.length).toString())
+
+  } catch (error) {
+    console.log('error getAlertNewPosts :', error)
+    res.sendStatus(500)
+  }
+}
+
+export { 
+  CreatePost, EditPost, 
+  DeletePost, GetPost, 
+  updateLike,GetPostByUserId,
+  getAlertNewPosts, CreateRepost };

@@ -13,7 +13,7 @@ async function validateCreatePostSchema(req, res, next) {
         }
 
     } catch (error) {
-        return res.status(501).send({ message: error.message })
+        return res.status(500).send({ message: error.message })
     }
 
     next();

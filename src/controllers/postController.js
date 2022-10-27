@@ -14,17 +14,10 @@ async function CreatePost(req, res) {
   });
 
   try {
-    // bloco insert post + like
-    const liked = false;
-    await postRepository.insertPost(userId, text, link);
-    const getPost = await connection.query(
-      `
+    await postRepository.insertPost(userId, text, link)
+    const getPost = await connection.query(`
     SELECT * FROM posts 
-    WHERE posts."userId" = $1`,
-      [userId]
-    );
-    const postId = getPost.rows[getPost.rows.length - 1].id;
-    await postRepository.insertLike(userId, postId, liked);
+    WHERE posts."userId" = $1`, [userId])
 
     if (hashtagsArray.length !== 0) {
       for (let i = 0; i < hashtagsArray.length; i++) {
@@ -51,6 +44,104 @@ async function CreatePost(req, res) {
 }
 
 async function GetPost(req, res) {
+
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  try {
+
+    const { rows: user } = await connection.query(`SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`, [token])
+
+    const { userId } = user[0]
+
+    const { rows: getPosts } = await connection.query(
+      `
+      SELECT
+        p.id AS "postId",
+        p.text,
+        p.link,
+        u."pictureUrl" AS "userImg",
+        u.name AS username,
+        p."userId",
+        l."likesQtd",
+        j."userLiked"
+      FROM
+        posts p
+      JOIN
+        users u ON p."userId"= u.id
+      LEFT JOIN
+      (SELECT
+        l."postId",
+        COUNT(l."userId") AS "likesQtd"
+      FROM
+        likes l
+      GROUP BY
+        l."postId") l ON p.id=l."postId"
+      LEFT JOIN
+        (SELECT
+        l."postId",
+      COUNT(l."userId") AS "userLiked"
+      FROM 
+        likes l
+      WHERE
+          l."userId" = $1
+
+      GROUP BY
+        l."postId"	   
+	   
+      ) j ON p.id = j."postId"
+      
+      ORDER BY
+        p.id DESC`, [userId]
+    )
+
+    // const { rows: lista } = await connection.query(`
+    // SELECT 
+
+    //       json_build_object(
+    //         'name', users.name,
+    //         'postId', "postId") AS obj
+    // FROM likes JOIN users ON
+    //     likes."userId" = users.id
+    // ORDER BY "postId"
+    // `)
+
+    // const {rows:lista} = await connection.query(`
+    // SELECT users.name 
+    // FROM likes 
+    // JOIN users ON likes."userId"=users.id 
+    // WHERE likes."postId"=$1 `,[60])
+
+
+    // let likers = {lista:1}
+
+    // getPosts.forEach(async (element) => {
+    //   console.log('bolinha')
+    //   const { rows: lista } = await connection.query(`
+    //     SELECT users.name 
+    //     FROM likes 
+    //     JOIN users ON likes."userId"=users.id 
+    //     WHERE likes."postId"=$1 `, [element.postId])
+
+    //   likers = {array: lista}
+    //   console.log(likers)
+
+    // });
+
+    // console.log(likers)
+
+
+
+    res.status(201).send(getPosts);
+  } catch (error) {
+    console.error(error)
+    res.sendStatus(500)
+  }
+
+}
+
+async function GetPostByUserId(req, res) {
+  const userId = req.params.id
+
   try {
     const getPosts = await connection.query(
       `SELECT 
@@ -60,50 +151,26 @@ async function GetPost(req, res) {
         users.name AS "username",
         users.id AS "userId",
         users."pictureUrl" AS "userImg",
-        "likesQtd",
+        l.liked,
         posts."createdAt"
         FROM posts
         JOIN users ON posts."userId" = users.id
-        JOIN (
-          SELECT
+        JOIN (SELECT
           likes."postId",
-          COUNT(likes."postId")-1 as "likesQtd"
+          COUNT(likes."postId")-1 as "liked"
           FROM likes
           GROUP BY likes."postId") l ON posts.id = l."postId"
-        ORDER BY posts."createdAt" DESC`
+          WHERE users.id = $1
+        ORDER BY posts."createdAt" DESC`, [userId]
     )
     // console.log('GETPOSTS :', getPosts.rows)
     res.status(201).send(getPosts.rows);
+
   } catch (error) {
-    res.sendStatus(500);
+    console.error(error)
+    res.sendStatus(500)
+
   }
-}
-
-async function GetPostByUserId(req, res) {
-  const userId = req.params.id
-
-  const getPosts = await connection.query(
-    `SELECT 
-      posts.id AS "postId",
-      posts.text,
-      posts.link,
-      users.name AS "username",
-      users.id AS "userId",
-      users."pictureUrl" AS "userImg",
-      l.liked,
-      posts."createdAt"
-      FROM posts
-      JOIN users ON posts."userId" = users.id
-      JOIN (SELECT
-        likes."postId",
-        COUNT(likes."postId")-1 as "liked"
-        FROM likes
-        GROUP BY likes."postId") l ON posts.id = l."postId"
-        WHERE users.id = $1
-      ORDER BY posts."createdAt" DESC`,
-    [userId]
-  );
-  res.status(201).send(getPosts.rows);
 }
 
 async function EditPost(req, res) {
@@ -146,17 +213,40 @@ async function insertHashPost(hashtagId, userId, text, link) {
 }
 
 async function updateLike(req, res) {
-  const { userId, postId } = req.body;
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
 
   try {
-    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
 
-    await connection.query(`INSERT INTO likes ("userId", "postId" VALUES ($1, $2))`, [userId, postId])
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
 
+    console.log(userId, postId)
+    await connection.query('INSERT INTO likes ("userId", "postId") VALUES ($1, $2)', [userId, postId])
+
+    res.sendStatus(200)
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
+
+async function updateDisLike(req, res) {
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  try {
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
+
+    console.log(userId, postId)
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+
+    res.sendStatus(200)
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+}
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike, updateDisLike, GetPostByUserId };
 
 async function CreateRepost(req, res) {
   const { postId, userId } = req.body;

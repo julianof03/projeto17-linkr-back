@@ -51,7 +51,6 @@ export async function loggedUser(req, res, next) {
         console.log(error)
         return res.status(401).send('Invalid Token')
     }
-
     try {
         const hasToken = await connection.query(`
         SELECT
@@ -73,6 +72,7 @@ export async function loggedUser(req, res, next) {
         next();
 
     } catch (error) {
+        console.log('to inválido', userId)
         res.sendStatus(error);
     }
 };

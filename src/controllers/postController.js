@@ -251,7 +251,6 @@ async function updateDisLike(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-export { CreatePost, EditPost, DeletePost, GetPost, updateLike, updateDisLike, GetPostByUserId };
 
 async function CreateRepost(req, res) {
   const { postId, userId } = req.body;
@@ -282,5 +281,5 @@ async function getAlertNewPosts(req, res){
 export { 
   CreatePost, EditPost, 
   DeletePost, GetPost, 
-  updateLike,GetPostByUserId,
+  updateLike,updateDisLike, GetPostByUserId,
   getAlertNewPosts, CreateRepost };

@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { connection } from "../database/database.js";
 import { postRepository } from '../repositories/postRepositories.js'
 
@@ -29,7 +28,9 @@ async function CreatePost(req, res) {
 
     const postId = (getPost.rows[(getPost.rows.length-1)].id)
 
-    await postRepository.insertLike(userId, postId, liked)
+    // await postRepository.insertLike(userId, postId, liked)
+
+    await postRepository.insertLike(userId, postId)
 
     if (hashtagsArray.length !== 0) {
 
@@ -73,23 +74,23 @@ async function GetPost(req, res) {
 
     const getPosts = await connection.query(
       `SELECT 
-        posts.id AS "postId",
-        posts.text,
-        posts.link,
-        users.name AS "username",
-        users.id AS "userId",
-        users."pictureUrl" AS "userImg",
-        "likesQtd",
-        posts."createdAt"
-        FROM posts
-        JOIN users ON posts."userId" = users.id
-        JOIN (
-          SELECT
-          likes."postId",
-          COUNT(likes."postId")-1 as "likesQtd"
-          FROM likes
-          GROUP BY likes."postId") l ON posts.id = l."postId"
-        ORDER BY posts."createdAt" DESC`
+      posts.id AS "postId",
+      posts.text,
+      posts.link,
+      users.name AS "username",
+      users.id AS "userId",
+      users."pictureUrl" AS "userImg",
+      "likesQtd",
+      posts."createdAt"
+      FROM posts
+      JOIN users ON posts."userId" = users.id
+      LEFT JOIN (
+        SELECT
+        likes."postId",
+        COUNT(likes."postId")-1 as "likesQtd"
+        FROM likes
+        GROUP BY likes."postId") l ON posts.id = l."postId"
+      ORDER BY posts."createdAt" DESC`
     )
 
     res.status(201).send(getPosts.rows);
@@ -186,4 +187,25 @@ async function updateLike(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-export { CreatePost, EditPost, DeletePost, GetPost, updateLike,GetPostByUserId };
+
+async function GetComments(req, res){
+  const {postId} = req.params;
+
+  try {
+
+    const Comments = await connection.query(`select 
+    comment,
+    users."pictureUrl",
+    users."name"
+    from comments 
+    join users on users.id = comments."userId"
+    where "postId" = $1`, [postId])
+
+  res.status(201).send(Comments.rows);
+
+  } catch (error) {
+    res.status(501).send({ message: error.message });
+  }
+}
+
+export { CreatePost, EditPost, DeletePost, GetPost, updateLike, GetPostByUserId, GetComments };

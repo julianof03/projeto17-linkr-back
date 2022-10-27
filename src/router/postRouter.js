@@ -13,7 +13,7 @@ router.post('/timeline', loggedUser, schemaValidation(postSchema), CreatePost);
 router.get('/timeline',GetPost);
 router.post('/timeline/:id', validateCreatePostSchema, EditPost);
 router.delete('/timeline/:id', validateCreatePostSchema, DeletePost);
-router.get("/users/:id",/* loggedUser, */ GetPostByUserId);
+router.get("/users/:id",loggedUser,  GetPostByUserId);
 
 
 

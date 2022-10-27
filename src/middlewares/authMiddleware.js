@@ -33,6 +33,7 @@ export function validateSignIn(req, res, next) {
 
 export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
+    
 
     if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
 
@@ -41,6 +42,7 @@ export async function loggedUser(req, res, next) {
 
     const token = authorization.replace('Bearer ', '');
     let userId;
+    
     try {
         const verification = jwt.verify(token, process.env.TOKEN_SECRET);
         userId = verification.userId;
@@ -51,7 +53,6 @@ export async function loggedUser(req, res, next) {
     }
 
     try {
-
         const hasToken = await connection.query(`
         SELECT
         "isValid"
@@ -67,7 +68,6 @@ export async function loggedUser(req, res, next) {
         if (hasToken.rows.length === 0 || !hasToken.rows[0].isValid) {
             return res.sendStatus(401);
         };
-
         res.locals.userId = userId;
         res.locals.token = token;
         next();

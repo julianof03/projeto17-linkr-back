@@ -78,8 +78,11 @@ async function GetPost(req, res) {
 }
 
 async function GetPostByUserId(req, res) {
-  const userId = req.params.id
-  console.log(userId)
+  console.log('oi');
+  const userId = req.params.id;
+  console.log(userId);
+  const id = res.locals.userId;
+  console.log(id);
 
   const getPosts = await connection.query(
     `SELECT 
@@ -100,8 +103,20 @@ async function GetPostByUserId(req, res) {
         GROUP BY likes."postId") l ON posts.id = l."postId"
         WHERE users.id = $1
       ORDER BY posts."createdAt" DESC`, [userId]
-  )
-  res.status(201).send(getPosts.rows);
+  );
+  const follows = connection.query(`
+  SELECT id
+  FROM follow
+  WHERE "userId"=$1 AND "follows"=$2
+  LIMIT1
+  `[id,userId]);
+
+  const toReturn = {
+    isFollowing: follows.rows,
+    Posts: getPosts.rows
+  }
+
+  res.status(201).send(toReturn);
 }
 
 async function EditPost(req, res) {

@@ -26,6 +26,12 @@ async function insertHashtag(atual) {
     return connection.query(query, [atual])
 }
 
+async function deleteHashtag(hashtagId, postId) {
+    const deleteHashtag =
+      'DELETE FROM "hashPost" WHERE "hashtagId"= $1 AND "postId"=$2';
+    return connection.query(deleteHashtag,[hashtagId, postId]);
+  }
+
 async function deletePost(id) {
     const query = `DELETE FROM posts WHERE id = $1`
     return connection.query(query, [id])
@@ -36,14 +42,29 @@ async function insertRepost(postId, userId) {
     return connection.query(query, [postId, userId])
 }
 
+
+async function getLikers(){
+    const query = `
+    SELECT 
+        users.name,
+        "postId"
+    FROM likes 
+    JOIN users ON likes."userId"=users.id 
+    ORDER BY "postId"
+    `
+    return connection.query(query)
+}
+
 const postRepository = {
     insertPost,
     getHashtagIdByName,
     getPostId,
     insertHashtag,
+    deleteHashtag,
     insertLike,
     insertRepost,
     deletePost,
+    getLikers
 }
 
 export { postRepository }

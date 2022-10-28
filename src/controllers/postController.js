@@ -2,7 +2,6 @@ import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
 async function CreatePost(req, res) {
-
   const { text, link } = req.body;
   const { userId } = res.locals;
 
@@ -12,7 +11,6 @@ async function CreatePost(req, res) {
     if (value[0] === "#") {
       hashtagsArray.push(value.replace("#", ""));
     }
-
   });
 
   try {
@@ -25,15 +23,12 @@ async function CreatePost(req, res) {
     );
 
     if (hashtagsArray.length !== 0) {
-
       for (let i = 0; i < hashtagsArray.length; i++) {
-
         const atual = hashtagsArray[i];
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
 
         if (isHashtagExists.rowCount !== 0) {
-
           hashtagId = isHashtagExists.rows[0].id;
           await insertHashPost(hashtagId, userId, text, link);
 
@@ -50,12 +45,9 @@ async function CreatePost(req, res) {
     }
 
     return res.sendStatus(201);
-
   } catch (error) {
-
     console.log(error);
     res.status(500).send({ message: error.message });
-
   }
 }
 
@@ -136,47 +128,66 @@ async function GetPost(req, res) {
 }
 
 async function GetPostByUserId(req, res) {
-
-  const userId = req.params.id
-  const loggedUserId = res.locals.userId
+  const userId = req.params.id;
+  const loggedUserId = res.locals.userId;
 
   try {
-
     const getPosts = await connection.query(
-      `SELECT
-        users.name AS "username",
-        users.id AS "userId",
-        users."pictureUrl" AS "userImg",
-        posts.id AS "postId",
-        posts.text,
-        posts.link,
-        posts."createdAt",
-        l.liked,
-        f.follows AS "isFollowing"
-      FROM users
-      LEFT JOIN posts ON posts."userId" = users.id
-      LEFT JOIN (SELECT
-        likes."postId",
-        COUNT(likes."postId")-1 as "liked"
-        FROM likes
-        GROUP BY likes."postId") l ON posts.id = l."postId"
-      LEFT JOIN(SELECT
-        follows 
-        from follow f
-        WHERE
-        f.follows = $1 AND f."userId" = $2) f ON f.follows = users.id
-      WHERE users.id =$1
-      ORDER BY posts."createdAt"`, [userId, loggedUserId]
-    )
+      `SELECT     feed.id, feed."repostId" as "feedRepostId",
+      p.id as "postId", p."userId" as "postUserId",p.text, p.link,
+      up."pictureUrl" AS "userImg",
+      up.name AS "nameUserPost",
+      r."userId" as "RepostUserId",
+      ur.name AS "resposUserName",
+      l."likesQtd",  
+      j."userLiked",
+       repost."repostCount",
+       comments."commentCount"
+FROM feed
+LEFT JOIN repost AS r on feed."repostId" = r.id
+LEFT JOIN posts as p on feed."postId" = p.id    
+LEFT JOIN users as up on p."userId" = up.id
+LEFT JOIN users as ur on r."userId" = ur.id
+
+--     LIKES QUANTIDADE
+LEFT JOIN (
+  SELECT l."postId", COUNT(l."userId") AS "likesQtd"
+  FROM likes l
+  GROUP BY l."postId"
+) l ON p.id = l."postId"
+
+-- USER LIKED
+LEFT JOIN 
+(
+  SELECT l."postId", COUNT(l."userId") AS "userLiked"
+  FROM  likes l
+  WHERE l."userId" = 13
+  GROUP BY l."postId"       
+) j ON p.id = j."postId"
+
+--     REPOST COUNT
+LEFT JOIN
+(
+  SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId" 
+   FROM repost 
+   GROUP BY repost.id
+) repost ON p.id = repost."postId"
+
+--     COMENTARIO
+LEFT JOIN
+(
+  SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
+   FROM comments GROUP BY comments."postId"
+) comments ON p.id = comments."postId"`,
+      [userId, loggedUserId]
+    );
     res.status(201).send(getPosts.rows);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
   }
-
 }
 async function EditPost(req, res) {
-
   const { id } = req.params;
   const { text } = req.body;
   let textMessage = "";
@@ -197,7 +208,6 @@ async function EditPost(req, res) {
 }
 
 async function DeletePost(req, res) {
-
   const { id } = req.params;
 
   try {
@@ -205,20 +215,17 @@ async function DeletePost(req, res) {
     await postRepository.deletePost(id);
 
     res.status(204).send({ message: "menssagem deletada" });
-
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
 async function insertHashPost(hashtagId, userId, text, link) {
-
   const postId = await postRepository.getPostId(userId, text, link);
   await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
     postId.rows[0].id,
     hashtagId,
   ]);
-
 }
 
 async function updateLike(req, res) {
@@ -226,8 +233,10 @@ async function updateLike(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
 
   try {
-    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
-    const userId = session.rows[0].userId
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [
+      token,
+    ]);
+    const userId = session.rows[0].userId;
 
     console.log(userId, postId);
     await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
@@ -254,7 +263,8 @@ async function CreateRepost(req, res) {
 async function GetComments(req, res) {
   const { postId, userId } = req.params;
   try {
-    const Comments = await connection.query(`
+    const Comments = await connection.query(
+      `
     select 
     comment,
 	users.id AS "userId",
@@ -265,9 +275,10 @@ async function GetComments(req, res) {
     join users on users.id = comments."userId"
 	left join (SELECT follow.follows FROM follow where follow."userId" = $1 GROUP BY follow.follows
     ) follow ON users.id = follow.follows
-    where "postId" = $2`, [userId, postId])
+    where "postId" = $2`,
+      [userId, postId]
+    );
     res.status(201).send(Comments.rows);
-
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
@@ -277,21 +288,22 @@ async function InsertComment(req, res) {
   const { postId } = req.params;
   const { userId, comment } = req.body;
   try {
-
-    const query = await connection.query(`
+    const query = await connection.query(
+      `
     INSERT INTO comments 
     ("postId", "userId", comment) 
-    Values ($1, $2, $3)`, [postId, userId, comment]);
+    Values ($1, $2, $3)`,
+      [postId, userId, comment]
+    );
 
     res.sendStatus(201);
-
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
 async function getAlertNewPosts(req, res) {
-  const { createdAt } = req.body
+  const { createdAt } = req.body;
   // console.log('CREATEAD :', req.body)
   try {
     const { rows: posts } = await connection.query(
@@ -308,9 +320,14 @@ async function getAlertNewPosts(req, res) {
   }
 }
 export {
-  CreatePost, EditPost,
-  DeletePost, GetPost,
-  updateLike, GetPostByUserId,
-  GetComments, InsertComment,
-  getAlertNewPosts, CreateRepost,
+  CreatePost,
+  EditPost,
+  DeletePost,
+  GetPost,
+  updateLike,
+  GetPostByUserId,
+  GetComments,
+  InsertComment,
+  getAlertNewPosts,
+  CreateRepost,
 };

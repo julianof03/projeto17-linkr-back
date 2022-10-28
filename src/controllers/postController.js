@@ -82,6 +82,8 @@ async function GetPost(req, res) {
         l."likesQtd",
         j."userLiked", 
         repost."repostCount",
+        repost.id AS "repostId",
+        repost."userId" AS "repostUser",
 		comments."commentCount"
       FROM
         posts p
@@ -111,7 +113,7 @@ async function GetPost(req, res) {
       ) j ON p.id = j."postId"
 
       LEFT JOIN
-      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount" FROM repost GROUP BY repost."postId"
+      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId" FROM repost GROUP BY repost.id
     ) repost ON p.id = repost."postId"
       LEFT JOIN
       (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" FROM comments GROUP BY comments."postId"

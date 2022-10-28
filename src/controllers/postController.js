@@ -171,7 +171,7 @@ async function GetPostByUserId(req, res) {
       WHERE users.id =$1
       ORDER BY posts."createdAt"`, [userId, loggedUserId]
     )
-    //console.log('GETPOSTS :', getPosts.rows)
+    
     res.status(201).send(getPosts.rows);
 
   } catch (error) {

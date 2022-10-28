@@ -19,9 +19,11 @@ export async function searchUsers(req, res) {
 
 export async function userInfo(req, res) {
     const userId = res.locals.userId;
+    console.log(userId)
 
     try {
         const user = await usersRepository.getPicture(userId)
+        console.log(user)
 
         return res.status(200).send(user.rows[0].pictureUrl);
 

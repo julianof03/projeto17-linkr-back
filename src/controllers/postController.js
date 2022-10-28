@@ -223,7 +223,6 @@ async function updateLike(req, res) {
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
-    console.log(userId, postId);
     await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
       userId,
       postId,
@@ -236,7 +235,10 @@ async function updateLike(req, res) {
 }
 
 async function CreateRepost(req, res) {
+  console.log('REQ.BODY CREATE REPOST :', req.body)
   const { postId, userId } = req.body;
+  console.log('userId do repostador :', userId)
+
   try {
     await postRepository.insertRepost(postId, userId);
     res.sendStatus(200);
@@ -286,7 +288,6 @@ async function InsertComment(req, res) {
 
 async function getAlertNewPosts(req, res) {
   const { createdAt } = req.body
-  // console.log('CREATEAD :', req.body)
   try {
     const { rows: posts } = await connection.query(
       `

@@ -1,7 +1,7 @@
 import { connection } from "../database/database.js";
 
 export async function timeLine(req, res) {
-    console.log('fui chamado pelo front')
+    console.log('timiline Controller')
     const token = req.headers.authorization?.replace("Bearer ", "");
   
     try {
@@ -60,9 +60,37 @@ export async function timeLine(req, res) {
 		SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
      	FROM comments GROUP BY comments."postId"
   	) comments ON p.id = comments."postId"
-    `, [1]);
+    `, [12]);
   
       res.status(201).send(getPosts);
+    } catch (error) {
+      console.error(error);
+      res.sendStatus(500);
+    }
+  }
+
+  export async function repost(req, res) {
+    console.log('insert no feed ', req.body)
+    console.log('fui chamado pelo front')
+    const {postId, userId} = req.body
+    try {
+
+    //criar repostId
+        const query = `INSERT INTO repost ("postId", "userId") VALUES ($1, $2)`
+        await connection.query(query, [postId, userId])
+
+        const {rows: repost} = await connection.query(`
+            SELECT * FROM repost 
+            WHERE repost."userId" = $1 and repost."postId" = $2
+        `, [userId, postId] )
+
+    //criar o feed {postId,repostId}
+        await connection.query(`
+            INSERT INTO feed("postId", "repostId")
+            VALUES ($1, $2)
+        `, [postId, repost[0].id])
+  
+      res.sendStatus(201);
     } catch (error) {
       console.error(error);
       res.sendStatus(500);

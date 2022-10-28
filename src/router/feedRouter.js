@@ -1,8 +1,9 @@
 import express from "express";
-import { timeLine } from "../controllers/feedController.js";
+import { repost, timeLine } from "../controllers/feedController.js";
 
 const feedRouter = express.Router();
 
 feedRouter.get('/timeline', timeLine );
+feedRouter.post('/repost', repost);
 
 export default feedRouter;

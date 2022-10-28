@@ -2,17 +2,14 @@ import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
 async function CreatePost(req, res) {
-
+  console.log('createPost controller')
   const { text, link } = req.body;
   const { userId } = res.locals;
-
   const hashtagsArray = [];
-
   await text.split(" ").forEach((value) => {
     if (value[0] === "#") {
       hashtagsArray.push(value.replace("#", ""));
     }
-
   });
 
   try {
@@ -48,6 +45,12 @@ async function CreatePost(req, res) {
         await insertHashPost(hashtagId, userId, text, link);
       }
     }
+
+    // await connection.query(`
+    //   INSERT INTO feed("postId", repostId)
+    //   VALUES ($1, $2)
+    // `, [postId, NULL])
+
 
     return res.sendStatus(201);
 

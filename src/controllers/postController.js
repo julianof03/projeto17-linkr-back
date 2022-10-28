@@ -16,11 +16,13 @@ async function CreatePost(req, res) {
   });
 
   try {
-    await postRepository.insertPost(userId, text, link)
-
-    const getPost = await connection.query(`
+    await postRepository.insertPost(userId, text, link);
+    const getPost = await connection.query(
+      `
     SELECT * FROM posts 
-    WHERE posts."userId" = $1`, [userId])
+    WHERE posts."userId" = $1`,
+      [userId]
+    );
 
     if (hashtagsArray.length !== 0) {
 
@@ -58,14 +60,15 @@ async function CreatePost(req, res) {
 }
 
 async function GetPost(req, res) {
-
-  const token = req.headers.authorization?.replace('Bearer ', '')
+  const token = req.headers.authorization?.replace("Bearer ", "");
 
   try {
+    const { rows: user } = await connection.query(
+      `SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`,
+      [token]
+    );
 
-    const { rows: user } = await connection.query(`SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`, [token])
-
-    const { userId } = user[0]
+    const { userId } = user[0];
 
     const { rows: getPosts } = await connection.query(
       `
@@ -77,11 +80,13 @@ async function GetPost(req, res) {
         u.name AS username,
         p."userId",
         l."likesQtd",
-        j."userLiked"
+        j."userLiked", 
+        repost."repostCount"
       FROM
         posts p
       JOIN
         users u ON p."userId"= u.id
+
       LEFT JOIN
       (SELECT
         l."postId",
@@ -90,6 +95,7 @@ async function GetPost(req, res) {
         likes l
       GROUP BY
         l."postId") l ON p.id=l."postId"
+
       LEFT JOIN
         (SELECT
         l."postId",
@@ -102,16 +108,21 @@ async function GetPost(req, res) {
         l."postId"	   
 	   
       ) j ON p.id = j."postId"
+
+      LEFT JOIN
+      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount" FROM repost GROUP BY repost."postId"
+    ) repost ON p.id = repost."postId"
       
       ORDER BY
-        p.id DESC`, [userId]
-    )
+        p.id DESC`,
+      [userId]
+    );
+
     res.status(201).send(getPosts);
   } catch (error) {
-    console.error(error)
-    res.sendStatus(500)
+    console.error(error);
+    res.sendStatus(500);
   }
-
 }
 
 async function GetPostByUserId(req, res) {
@@ -148,11 +159,9 @@ async function GetPostByUserId(req, res) {
       ORDER BY posts."createdAt"`, [userId, loggedUserId]
     )
     res.status(201).send(getPosts.rows);
-
   } catch (error) {
-    console.error(error)
-    res.sendStatus(500)
-
+    console.error(error);
+    res.sendStatus(500);
   }
   
 }
@@ -203,19 +212,20 @@ async function insertHashPost(hashtagId, userId, text, link) {
 }
 
 async function updateLike(req, res) {
-  const { postId } = req.body
-  const token = req.headers.authorization?.replace('Bearer ', '')
+  const { postId } = req.body;
+  const token = req.headers.authorization?.replace("Bearer ", "");
 
   try {
-
-    await connection.query(`UPDATE posts SET liked=$1 WHERE posts.id = $2`, [liked, id])
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
-    console.log(userId, postId)
-    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+    console.log(userId, postId);
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
+      userId,
+      postId,
+    ]);
 
-    res.sendStatus(200)
+    res.sendStatus(200);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -223,10 +233,9 @@ async function updateLike(req, res) {
 
 async function CreateRepost(req, res) {
   const { postId, userId } = req.body;
-
   try {
     await postRepository.insertRepost(postId, userId);
-    res.sendStatus(200)
+    res.sendStatus(200);
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
@@ -274,15 +283,17 @@ async function getAlertNewPosts(req, res){
   const {createdAt} = req.body
   // console.log('CREATEAD :', req.body)
   try {
-    const {rows: posts} = await connection.query(`
+    const { rows: posts } = await connection.query(
+      `
                             SELECT * FROM posts
                             WHERE posts."createdAt" > $1
-                          `, [createdAt])
-    return res.status(200).send((posts.length).toString())
-
+                          `,
+      [createdAt]
+    );
+    return res.status(200).send(posts.length.toString());
   } catch (error) {
-    console.log('error getAlertNewPosts :', error)
-    res.sendStatus(500)
+    console.log("error getAlertNewPosts :", error);
+    res.sendStatus(500);
   }
 }
 export { 

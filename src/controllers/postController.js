@@ -211,15 +211,11 @@ async function DeletePost(req, res) {
         const atual = hashtagsArray[i];
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
-        console.log('hashtagId')
-
 
         if (isHashtagExists.rowCount !== 0) {
           const postId = id
-          console.log('2 postId', postId)
 
           hashtagId = isHashtagExists.rows[0].id;
-          console.log('hashtagId', hashtagId)
           await postRepository.deleteHashtag(hashtagId, postId);
           console.log('3')
 

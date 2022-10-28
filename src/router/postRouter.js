@@ -1,12 +1,10 @@
 import {
-  EditPost, DeletePost, GetPost,
+  EditPost, DeletePost,
   GetPostByUserId,  updateLike,
-  CreatePost,       EditPost,
-  DeletePost,       GetPost,
-  GetPostByUserId,  getLikers,
+  getLikers,
   getAlertNewPosts, CreateRepost,
-  GetComments,      InsertComment,
-  updateLike,       updateDisLike
+  GetComments,      InsertComment,       
+  updateDisLike
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";

@@ -293,7 +293,7 @@ async function getAlertNewPosts(req, res) {
 
 export {
   EditPost,
-  DeletePost, GetPost,
+  DeletePost,
   updateLike, updateDisLike,
   GetPostByUserId, GetComments,
   InsertComment, getAlertNewPosts,

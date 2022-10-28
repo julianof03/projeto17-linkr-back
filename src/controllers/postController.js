@@ -32,6 +32,7 @@ async function CreatePost(req, res) {
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
 
+
         if (isHashtagExists.rowCount !== 0) {
 
           hashtagId = isHashtagExists.rows[0].id;
@@ -194,6 +195,47 @@ async function DeletePost(req, res) {
   const { id } = req.params;
 
   try {
+    // achar post para deletar a hashtag tbm
+    const { rows: post } = await connection.query(`
+    SELECT * FROM posts WHERE id = $1`, [id])
+
+    let text = post[0].text
+    const hashtagsArray = [];
+
+    await text.split(" ").forEach((value) => {
+      if (value[0] === "#") {
+        hashtagsArray.push(value.replace("#", ""));
+      }
+
+    });
+
+    if (hashtagsArray.length !== 0) {
+
+      for (let i = 0; i < hashtagsArray.length; i++) {
+
+        const atual = hashtagsArray[i];
+        const isHashtagExists = await postRepository.getHashtagIdByName(atual);
+        let hashtagId;
+        console.log('hashtagId')
+
+
+        if (isHashtagExists.rowCount !== 0) {
+          const postId = id
+          console.log('2 postId', postId)
+
+          hashtagId = isHashtagExists.rows[0].id;
+          console.log('hashtagId', hashtagId)
+          await postRepository.deleteHashtag(hashtagId, postId);
+          console.log('3')
+
+          continue;
+
+        }
+
+      }
+    }
+
+
     // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
     await postRepository.deletePost(id);
 
@@ -226,7 +268,7 @@ async function updateLike(req, res) {
       userId,
       postId,
     ]);
-    
+
 
     res.sendStatus(200);
   } catch (error) {
@@ -305,7 +347,7 @@ async function getLikers(req, res) {
       ORDER BY j."isTheLiker" NULLS LAST
     `, [postId, userId])
 
-    console.log('likers',likers)
+    console.log('likers', likers)
     let lista = []
     let frase = ''
     const numLikes = likers.length
@@ -313,53 +355,53 @@ async function getLikers(req, res) {
 
     // console.log('length: ',likers.length)
 
-    if(likers.length === 0){
+    if (likers.length === 0) {
       frase = 'Nenhuma curtida'
       return res.status(200).send(frase)
 
     }
 
-    if(likers[0].isTheLiker){
+    if (likers[0].isTheLiker) {
       // colocar você
-      if(likers.length === 1){
+      if (likers.length === 1) {
         frase = 'Você curtiu'
       }
-      if (likers.length === 2  ) {
+      if (likers.length === 2) {
         console.log('length =1')
         lista.push('Você')
         lista = [...lista, likers[0].name]
         frase = lista.join(' e ')
         frase = frase + ` curtiram`
-  
-      } 
-      if(likers.length > 2 ) {
+
+      }
+      if (likers.length > 2) {
         lista = [likers[0].name, likers[1].name]
-        frase = `Você, ${likers[0].name} e outros ${numLikes -2} curtiram`
-        
+        frase = `Você, ${likers[0].name} e outros ${numLikes - 2} curtiram`
+
       }
 
-    }else{
+    } else {
       // sem você
-      if(likers.length === 1){
+      if (likers.length === 1) {
         frase = likers[0].name + ' curtiu'
       }
-      if (likers.length === 2  ) {
+      if (likers.length === 2) {
         console.log('length =1')
-        lista = [ likers[0].name, likers[1].name]
+        lista = [likers[0].name, likers[1].name]
         frase = lista.join(' e ')
         frase = frase + ` curtiram`
-      } 
-      if(likers.length > 2 ) {
+      }
+      if (likers.length > 2) {
         lista = [likers[0].name, likers[1].name]
         frase = lista.join(', ')
-        frase = frase +  ` e outros ${numLikes -2} curtiram`
+        frase = frase + ` e outros ${numLikes - 2} curtiram`
       }
     }
-    
+
 
     res.status(200).send(frase)
   } catch (error) {
-    console.error( error)
+    console.error(error)
     res.sendStatus(500)
 
   }
@@ -401,8 +443,8 @@ export {
   CreatePost, EditPost,
   DeletePost, GetPost,
   updateLike, updateDisLike,
-  GetPostByUserId, GetComments, 
-  InsertComment, getAlertNewPosts, 
+  GetPostByUserId, GetComments,
+  InsertComment, getAlertNewPosts,
   CreateRepost, getLikers
 
 };

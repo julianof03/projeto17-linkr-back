@@ -67,9 +67,7 @@ async function GetPost(req, res) {
       `SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`,
       [token]
     );
-
     const { userId } = user[0];
-
     const { rows: getPosts } = await connection.query(
       `
       SELECT
@@ -84,7 +82,8 @@ async function GetPost(req, res) {
         repost."repostCount",
         repost.id AS "repostId",
         repost."userId" AS "repostUser",
-		comments."commentCount"
+        "respostUserName",
+        comments."commentCount"
       FROM
         posts p
       JOIN
@@ -108,16 +107,21 @@ async function GetPost(req, res) {
       WHERE
           l."userId" = $1
       GROUP BY
-        l."postId"	   
-	   
+        l."postId"       
+       
       ) j ON p.id = j."postId"
 
       LEFT JOIN
-      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId" FROM repost GROUP BY repost.id
-    ) repost ON p.id = repost."postId"
+      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId", 
+       users.name as "respostUserName"
+       FROM repost 
+       JOIN users on users.id = repost."userId"
+       GROUP BY repost.id, "respostUserName"
+      ) repost ON p.id = repost."postId"
       LEFT JOIN
-      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" FROM comments GROUP BY comments."postId"
-    ) comments ON p.id = comments."postId"
+      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
+       FROM comments GROUP BY comments."postId"
+        ) comments ON p.id = comments."postId"
       
       ORDER BY
         p.id DESC`,

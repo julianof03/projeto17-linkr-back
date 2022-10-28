@@ -266,8 +266,7 @@ async function updateDisLike(req, res) {
 async function CreateRepost(req, res) {
   const { postId, userId } = req.body;
   try {
-    const teste = await postRepository.insertRepost(postId, userId);
-    console.log(teste);
+    await postRepository.insertRepost(postId, userId);
     res.sendStatus(200);
   } catch (error) {
     res.status(501).send({ message: error.message });

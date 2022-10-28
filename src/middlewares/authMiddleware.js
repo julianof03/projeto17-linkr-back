@@ -33,7 +33,6 @@ export function validateSignIn(req, res, next) {
 
 export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
-    console.log(req.body)
 
     if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
 

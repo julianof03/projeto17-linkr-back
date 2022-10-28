@@ -2,7 +2,6 @@ import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
 async function CreatePost(req, res) {
-
   const { text, link } = req.body;
   const { userId } = res.locals;
 
@@ -12,7 +11,6 @@ async function CreatePost(req, res) {
     if (value[0] === "#") {
       hashtagsArray.push(value.replace("#", ""));
     }
-
   });
 
   try {
@@ -25,16 +23,13 @@ async function CreatePost(req, res) {
     );
 
     if (hashtagsArray.length !== 0) {
-
       for (let i = 0; i < hashtagsArray.length; i++) {
-
         const atual = hashtagsArray[i];
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
 
 
         if (isHashtagExists.rowCount !== 0) {
-
           hashtagId = isHashtagExists.rows[0].id;
           await insertHashPost(hashtagId, userId, text, link);
 
@@ -51,12 +46,9 @@ async function CreatePost(req, res) {
     }
 
     return res.sendStatus(201);
-
   } catch (error) {
-
     console.log(error);
     res.status(500).send({ message: error.message });
-
   }
 }
 
@@ -68,9 +60,7 @@ async function GetPost(req, res) {
       `SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`,
       [token]
     );
-
     const { userId } = user[0];
-
     const { rows: getPosts } = await connection.query(
       `
       SELECT
@@ -83,7 +73,10 @@ async function GetPost(req, res) {
         l."likesQtd",
         j."userLiked", 
         repost."repostCount",
-		comments."commentCount"
+        repost.id AS "repostId",
+        repost."userId" AS "repostUser",
+        "respostUserName",
+        comments."commentCount"
       FROM
         posts p
       JOIN
@@ -107,16 +100,21 @@ async function GetPost(req, res) {
       WHERE
           l."userId" = $1
       GROUP BY
-        l."postId"	   
-	   
+        l."postId"       
+       
       ) j ON p.id = j."postId"
 
       LEFT JOIN
-      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount" FROM repost GROUP BY repost."postId"
-    ) repost ON p.id = repost."postId"
+      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId", 
+       users.name as "respostUserName"
+       FROM repost 
+       JOIN users on users.id = repost."userId"
+       GROUP BY repost.id, "respostUserName"
+      ) repost ON p.id = repost."postId"
       LEFT JOIN
-      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" FROM comments GROUP BY comments."postId"
-    ) comments ON p.id = comments."postId"
+      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
+       FROM comments GROUP BY comments."postId"
+        ) comments ON p.id = comments."postId"
       
       ORDER BY
         p.id DESC`, [userId]
@@ -130,9 +128,8 @@ async function GetPost(req, res) {
 }
 
 async function GetPostByUserId(req, res) {
-
-  const userId = req.params.id
-  const loggedUserId = res.locals.userId
+  const userId = req.params.id;
+  const loggedUserId = res.locals.userId;
 
   try {
 
@@ -167,10 +164,8 @@ async function GetPostByUserId(req, res) {
     console.error(error);
     res.sendStatus(500);
   }
-
 }
 async function EditPost(req, res) {
-
   const { id } = req.params;
   const { text } = req.body;
   let textMessage = "";
@@ -191,7 +186,6 @@ async function EditPost(req, res) {
 }
 
 async function DeletePost(req, res) {
-
   const { id } = req.params;
 
   try {
@@ -240,20 +234,17 @@ async function DeletePost(req, res) {
     await postRepository.deletePost(id);
 
     res.status(204).send({ message: "menssagem deletada" });
-
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
 async function insertHashPost(hashtagId, userId, text, link) {
-
   const postId = await postRepository.getPostId(userId, text, link);
   await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
     postId.rows[0].id,
     hashtagId,
   ]);
-
 }
 
 async function updateLike(req, res) {
@@ -261,8 +252,10 @@ async function updateLike(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
 
   try {
-    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
-    const userId = session.rows[0].userId
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [
+      token,
+    ]);
+    const userId = session.rows[0].userId;
 
     await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [
       userId,
@@ -316,9 +309,10 @@ async function GetComments(req, res) {
     join users on users.id = comments."userId"
 	left join (SELECT follow.follows FROM follow where follow."userId" = $1 GROUP BY follow.follows
     ) follow ON users.id = follow.follows
-    where "postId" = $2`, [userId, postId])
+    where "postId" = $2`,
+      [userId, postId]
+    );
     res.status(201).send(Comments.rows);
-
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
@@ -417,7 +411,6 @@ async function InsertComment(req, res) {
     Values ($1, $2, $3)`, [postId, userId, comment]);
 
     res.sendStatus(201);
-
   } catch (error) {
     res.status(500).send({ message: error.message });
   }

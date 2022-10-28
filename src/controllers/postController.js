@@ -118,9 +118,8 @@ async function GetPost(req, res) {
     ) comments ON p.id = comments."postId"
       
       ORDER BY
-        p.id DESC`,
-      [userId]
-    );
+        p.id DESC`, [userId]
+    )
 
     res.status(201).send(getPosts);
   } catch (error) {
@@ -136,7 +135,7 @@ async function GetPostByUserId(req, res) {
 
   try {
 
-    const getPosts = await connection.query(
+    const { rows: getPosts } = await connection.query(
       `SELECT
         users.name AS "username",
         users.id AS "userId",
@@ -162,7 +161,7 @@ async function GetPostByUserId(req, res) {
       WHERE users.id =$1
       ORDER BY posts."createdAt"`, [userId, loggedUserId]
     )
-    res.status(201).send(getPosts.rows);
+    res.status(201).send(getPosts);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
@@ -223,13 +222,29 @@ async function updateLike(req, res) {
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
-    console.log(userId, postId);
-    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
+    await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [
       userId,
       postId,
     ]);
+    
 
     res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+}
+
+async function updateDisLike(req, res) {
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  try {
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
+
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+
+    res.sendStatus(200)
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -249,13 +264,13 @@ async function GetComments(req, res) {
   const { postId, userId } = req.params;
   try {
     const Comments = await connection.query(`
-    select 
+    select
     comment,
 	users.id AS "userId",
     users."pictureUrl",
     users."name",
 	follow.follows
-    from comments 
+    from comments
     join users on users.id = comments."userId"
 	left join (SELECT follow.follows FROM follow where follow."userId" = $1 GROUP BY follow.follows
     ) follow ON users.id = follow.follows
@@ -267,14 +282,96 @@ async function GetComments(req, res) {
   }
 }
 
+async function getLikers(req, res) {
+  const { postId } = req.params
+  const { userId } = res.locals
+
+  try {
+    const { rows: likers } = await connection.query(`
+    SELECT 
+      u.name,
+      j."isTheLiker"
+    FROM likes l
+    JOIN users u on u.id=l."userId"
+    LEFT JOIN(
+      SELECT
+        u.id AS "isTheLiker"
+      FROM 
+        users u
+      WHERE
+        u.id = $2
+        ) j ON u.id = j."isTheLiker"
+      WHERE l."postId"=$1
+      ORDER BY j."isTheLiker" NULLS LAST
+    `, [postId, userId])
+
+    console.log('likers',likers)
+    let lista = []
+    let frase = ''
+    const numLikes = likers.length
+    // FAZER A VERIFICAÇÃO DO IS THE LIKER
+
+    // console.log('length: ',likers.length)
+
+    if(likers.length === 0){
+      frase = 'Nenhuma curtida'
+      return res.status(200).send(frase)
+
+    }
+
+    if(likers[0].isTheLiker){
+      // colocar você
+      if(likers.length === 1){
+        frase = 'Você curtiu'
+      }
+      if (likers.length === 2  ) {
+        console.log('length =1')
+        lista.push('Você')
+        lista = [...lista, likers[0].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+  
+      } 
+      if(likers.length > 2 ) {
+        lista = [likers[0].name, likers[1].name]
+        frase = `Você, ${likers[0].name} e outros ${numLikes -2} curtiram`
+        
+      }
+
+    }else{
+      // sem você
+      if(likers.length === 1){
+        frase = likers[0].name + ' curtiu'
+      }
+      if (likers.length === 2  ) {
+        console.log('length =1')
+        lista = [ likers[0].name, likers[1].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+      } 
+      if(likers.length > 2 ) {
+        lista = [likers[0].name, likers[1].name]
+        frase = lista.join(', ')
+        frase = frase +  ` e outros ${numLikes -2} curtiram`
+      }
+    }
+    
+
+    res.status(200).send(frase)
+  } catch (error) {
+    console.error( error)
+    res.sendStatus(500)
+
+  }
+}
 async function InsertComment(req, res) {
   const { postId } = req.params;
   const { userId, comment } = req.body;
   try {
 
     const query = await connection.query(`
-    INSERT INTO comments 
-    ("postId", "userId", comment) 
+    INSERT INTO comments
+    ("postId", "userId", comment)
     Values ($1, $2, $3)`, [postId, userId, comment]);
 
     res.sendStatus(201);
@@ -286,7 +383,6 @@ async function InsertComment(req, res) {
 
 async function getAlertNewPosts(req, res) {
   const { createdAt } = req.body
-  // console.log('CREATEAD :', req.body)
   try {
     const { rows: posts } = await connection.query(
       `
@@ -297,14 +393,16 @@ async function getAlertNewPosts(req, res) {
     );
     return res.status(200).send(posts.length.toString());
   } catch (error) {
-    console.log("error getAlertNewPosts :", error);
+    console.error("error getAlertNewPosts :", error);
     res.sendStatus(500);
   }
 }
 export {
   CreatePost, EditPost,
   DeletePost, GetPost,
-  updateLike, GetPostByUserId,
-  GetComments, InsertComment,
-  getAlertNewPosts, CreateRepost,
+  updateLike, updateDisLike,
+  GetPostByUserId, GetComments, 
+  InsertComment, getAlertNewPosts, 
+  CreateRepost, getLikers
+
 };

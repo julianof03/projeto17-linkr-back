@@ -33,14 +33,14 @@ export function validateSignIn(req, res, next) {
 
 export async function loggedUser(req, res, next) {
     const authorization = req.headers.authorization;
-
-    if (!authorization || authorization.slice(0, 7) !== 'Bearer ') {
-
+    
+    if (!authorization || authorization.slice(0, 7) !== 'Bearer '){
         return res.sendStatus(401);
     };
 
     const token = authorization.replace('Bearer ', '');
     let userId;
+    
     try {
         const verification = jwt.verify(token, process.env.TOKEN_SECRET);
         userId = verification.userId;
@@ -49,9 +49,7 @@ export async function loggedUser(req, res, next) {
         console.log(error)
         return res.status(401).send('Invalid Token')
     }
-
     try {
-
         const hasToken = await connection.query(`
         SELECT
         "isValid"
@@ -67,9 +65,9 @@ export async function loggedUser(req, res, next) {
         if (hasToken.rows.length === 0 || !hasToken.rows[0].isValid) {
             return res.sendStatus(401);
         };
-
         res.locals.userId = userId;
         res.locals.token = token;
+
         next();
 
     } catch (error) {

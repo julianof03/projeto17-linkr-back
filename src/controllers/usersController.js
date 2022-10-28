@@ -49,7 +49,6 @@ export async function follow(req,res){
 export async function unfollow(req,res){
     const userId = res.locals.userId
     const follow = req.params.id
-    // console.log(follow)
     try{
     const unfollow = await connection.query(`
     DELETE FROM

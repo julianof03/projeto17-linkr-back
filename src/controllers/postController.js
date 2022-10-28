@@ -1,132 +1,6 @@
 import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
-async function CreatePost(req, res) {
-  const { text, link } = req.body;
-  const { userId } = res.locals;
-
-  const hashtagsArray = [];
-
-  await text.split(" ").forEach((value) => {
-    if (value[0] === "#") {
-      hashtagsArray.push(value.replace("#", ""));
-    }
-  });
-
-  try {
-    await postRepository.insertPost(userId, text, link);
-    const getPost = await connection.query(
-      `
-    SELECT * FROM posts 
-    WHERE posts."userId" = $1`,
-      [userId]
-    );
-
-    if (hashtagsArray.length !== 0) {
-      for (let i = 0; i < hashtagsArray.length; i++) {
-        const atual = hashtagsArray[i];
-        const isHashtagExists = await postRepository.getHashtagIdByName(atual);
-        let hashtagId;
-
-
-        if (isHashtagExists.rowCount !== 0) {
-          hashtagId = isHashtagExists.rows[0].id;
-          await insertHashPost(hashtagId, userId, text, link);
-
-          continue;
-        }
-
-        await postRepository.insertHashtag(atual);
-
-        const newHashtagId = await postRepository.getHashtagIdByName(atual);
-
-        hashtagId = newHashtagId.rows[0].id;
-        await insertHashPost(hashtagId, userId, text, link);
-      }
-    }
-
-    return res.sendStatus(201);
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ message: error.message });
-  }
-}
-
-async function GetPost(req, res) {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-
-  try {
-    const { rows: user } = await connection.query(
-      `SELECT sessions."userId" FROM sessions WHERE sessions.token = $1`,
-      [token]
-    );
-    const { userId } = user[0];
-    const { rows: getPosts } = await connection.query(
-      `
-      SELECT
-        p.id AS "postId",
-        p.text,
-        p.link,
-        u."pictureUrl" AS "userImg",
-        u.name AS username,
-        p."userId",
-        l."likesQtd",
-        j."userLiked", 
-        repost."repostCount",
-        repost.id AS "repostId",
-        repost."userId" AS "repostUser",
-        "respostUserName",
-        comments."commentCount"
-      FROM
-        posts p
-      JOIN
-        users u ON p."userId"= u.id
-
-      LEFT JOIN
-      (SELECT
-        l."postId",
-        COUNT(l."userId") AS "likesQtd"
-      FROM
-        likes l
-      GROUP BY
-        l."postId") l ON p.id=l."postId"
-
-      LEFT JOIN
-        (SELECT
-        l."postId",
-      COUNT(l."userId") AS "userLiked"
-      FROM 
-        likes l
-      WHERE
-          l."userId" = $1
-      GROUP BY
-        l."postId"       
-       
-      ) j ON p.id = j."postId"
-
-      LEFT JOIN
-      (SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId", 
-       users.name as "respostUserName"
-       FROM repost 
-       JOIN users on users.id = repost."userId"
-       GROUP BY repost.id, "respostUserName"
-      ) repost ON p.id = repost."postId"
-      LEFT JOIN
-      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
-       FROM comments GROUP BY comments."postId"
-        ) comments ON p.id = comments."postId"
-      
-      ORDER BY
-        p.id DESC`, [userId]
-    )
-
-    res.status(201).send(getPosts);
-  } catch (error) {
-    console.error(error);
-    res.sendStatus(500);
-  }
-}
-
 async function GetPostByUserId(req, res) {
   const userId = req.params.id;
   const loggedUserId = res.locals.userId;
@@ -165,7 +39,6 @@ async function GetPostByUserId(req, res) {
     res.sendStatus(500);
   }
 }
-
 async function EditPost(req, res) {
   const { id } = req.params;
   const { text } = req.body;
@@ -185,7 +58,6 @@ async function EditPost(req, res) {
     res.status(404).send({ message: "url não encontrado" });
   }
 }
-
 async function DeletePost(req, res) {
   const { id } = req.params;
 
@@ -226,7 +98,6 @@ async function DeletePost(req, res) {
       }
     }
 
-
     // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
     await postRepository.deletePost(id);
 
@@ -235,15 +106,6 @@ async function DeletePost(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
-async function insertHashPost(hashtagId, userId, text, link) {
-  const postId = await postRepository.getPostId(userId, text, link);
-  await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
-    postId.rows[0].id,
-    hashtagId,
-  ]);
-}
-
 async function updateLike(req, res) {
   const { postId } = req.body;
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -254,18 +116,14 @@ async function updateLike(req, res) {
     ]);
     const userId = session.rows[0].userId;
 
-    await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [
-      userId,
-      postId,
-    ]);
-
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+    await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [ userId, postId])
 
     res.sendStatus(200);
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
-
 async function updateDisLike(req, res) {
   const { postId } = req.body
   const token = req.headers.authorization?.replace('Bearer ', '')
@@ -281,9 +139,11 @@ async function updateDisLike(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
 async function CreateRepost(req, res) {
+  console.log('REQ.BODY CREATE REPOST :', req.body)
   const { postId, userId } = req.body;
+  console.log('userId do repostador :', userId)
+
   try {
     await postRepository.insertRepost(postId, userId);
     res.sendStatus(200);
@@ -291,7 +151,6 @@ async function CreateRepost(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-
 async function GetComments(req, res) {
   const { postId, userId } = req.params;
   try {
@@ -314,7 +173,6 @@ async function GetComments(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-
 async function getLikers(req, res) {
   const { postId } = req.params
   const { userId } = res.locals
@@ -412,7 +270,6 @@ async function InsertComment(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
 async function getAlertNewPosts(req, res) {
   const { createdAt } = req.body
   try {
@@ -429,9 +286,10 @@ async function getAlertNewPosts(req, res) {
     res.sendStatus(500);
   }
 }
+
 export {
-  CreatePost, EditPost,
-  DeletePost, GetPost,
+  EditPost,
+  DeletePost,
   updateLike, updateDisLike,
   GetPostByUserId, GetComments,
   InsertComment, getAlertNewPosts,

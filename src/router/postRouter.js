@@ -1,10 +1,10 @@
 import {
-  CreatePost,       EditPost,
-  DeletePost,       GetPost,
-  GetPostByUserId,  getLikers,
+  EditPost, DeletePost,
+  GetPostByUserId,  updateLike,
+  getLikers,
   getAlertNewPosts, CreateRepost,
-  GetComments,      InsertComment,
-  updateLike,       updateDisLike
+  GetComments,      InsertComment,       
+  updateDisLike
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";
@@ -14,8 +14,8 @@ import express from "express";
 
 const router = express.Router();
 
-router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
-router.get("/timeline", GetPost);
+// router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
+// router.get("/timeline", GetPost);
 
 router.post("/timeline/:id", validateCreatePostSchema, EditPost);
 router.delete("/timeline/:id", loggedUser,validateCreatePostSchema, DeletePost);

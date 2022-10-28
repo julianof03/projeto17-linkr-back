@@ -28,6 +28,7 @@ async function CreatePost(req, res) {
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
 
+
         if (isHashtagExists.rowCount !== 0) {
           hashtagId = isHashtagExists.rows[0].id;
           await insertHashPost(hashtagId, userId, text, link);
@@ -116,9 +117,8 @@ async function GetPost(req, res) {
         ) comments ON p.id = comments."postId"
       
       ORDER BY
-        p.id DESC`,
-      [userId]
-    );
+        p.id DESC`, [userId]
+    )
 
     res.status(201).send(getPosts);
   } catch (error) {
@@ -132,56 +132,34 @@ async function GetPostByUserId(req, res) {
   const loggedUserId = res.locals.userId;
 
   try {
-    const getPosts = await connection.query(
-      `SELECT     feed.id, feed."repostId" as "feedRepostId",
-      p.id as "postId", p."userId" as "postUserId",p.text, p.link,
-      up."pictureUrl" AS "userImg",
-      up.name AS "nameUserPost",
-      r."userId" as "RepostUserId",
-      ur.name AS "resposUserName",
-      l."likesQtd",  
-      j."userLiked",
-       repost."repostCount",
-       comments."commentCount"
-FROM feed
-LEFT JOIN repost AS r on feed."repostId" = r.id
-LEFT JOIN posts as p on feed."postId" = p.id    
-LEFT JOIN users as up on p."userId" = up.id
-LEFT JOIN users as ur on r."userId" = ur.id
 
---     LIKES QUANTIDADE
-LEFT JOIN (
-  SELECT l."postId", COUNT(l."userId") AS "likesQtd"
-  FROM likes l
-  GROUP BY l."postId"
-) l ON p.id = l."postId"
-
--- USER LIKED
-LEFT JOIN 
-(
-  SELECT l."postId", COUNT(l."userId") AS "userLiked"
-  FROM  likes l
-  WHERE l."userId" = 13
-  GROUP BY l."postId"       
-) j ON p.id = j."postId"
-
---     REPOST COUNT
-LEFT JOIN
-(
-  SELECT repost."postId", COUNT(repost."postId") AS "repostCount", repost.id, repost."userId" 
-   FROM repost 
-   GROUP BY repost.id
-) repost ON p.id = repost."postId"
-
---     COMENTARIO
-LEFT JOIN
-(
-  SELECT comments."postId", COUNT(comments."postId") AS "commentCount" 
-   FROM comments GROUP BY comments."postId"
-) comments ON p.id = comments."postId"`,
-      [userId, loggedUserId]
-    );
-    res.status(201).send(getPosts.rows);
+    const { rows: getPosts } = await connection.query(
+      `SELECT
+        users.name AS "username",
+        users.id AS "userId",
+        users."pictureUrl" AS "userImg",
+        posts.id AS "postId",
+        posts.text,
+        posts.link,
+        posts."createdAt",
+        l.liked,
+        f.follows AS "isFollowing"
+      FROM users
+      LEFT JOIN posts ON posts."userId" = users.id
+      LEFT JOIN (SELECT
+        likes."postId",
+        COUNT(likes."postId")-1 as "liked"
+        FROM likes
+        GROUP BY likes."postId") l ON posts.id = l."postId"
+      LEFT JOIN(SELECT
+        follows 
+        from follow f
+        WHERE
+        f.follows = $1 AND f."userId" = $2) f ON f.follows = users.id
+      WHERE users.id =$1
+      ORDER BY posts."createdAt"`, [userId, loggedUserId]
+    )
+    res.status(201).send(getPosts);
   } catch (error) {
     console.error(error);
     res.sendStatus(500);
@@ -211,6 +189,47 @@ async function DeletePost(req, res) {
   const { id } = req.params;
 
   try {
+    // achar post para deletar a hashtag tbm
+    const { rows: post } = await connection.query(`
+    SELECT * FROM posts WHERE id = $1`, [id])
+
+    let text = post[0].text
+    const hashtagsArray = [];
+
+    await text.split(" ").forEach((value) => {
+      if (value[0] === "#") {
+        hashtagsArray.push(value.replace("#", ""));
+      }
+
+    });
+
+    if (hashtagsArray.length !== 0) {
+
+      for (let i = 0; i < hashtagsArray.length; i++) {
+
+        const atual = hashtagsArray[i];
+        const isHashtagExists = await postRepository.getHashtagIdByName(atual);
+        let hashtagId;
+        console.log('hashtagId')
+
+
+        if (isHashtagExists.rowCount !== 0) {
+          const postId = id
+          console.log('2 postId', postId)
+
+          hashtagId = isHashtagExists.rows[0].id;
+          console.log('hashtagId', hashtagId)
+          await postRepository.deleteHashtag(hashtagId, postId);
+          console.log('3')
+
+          continue;
+
+        }
+
+      }
+    }
+
+
     // await connection.query("DELETE FROM posts WHERE id = $1", [id]);
     await postRepository.deletePost(id);
 
@@ -238,13 +257,29 @@ async function updateLike(req, res) {
     ]);
     const userId = session.rows[0].userId;
 
-    console.log(userId, postId);
-    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
+    await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [
       userId,
       postId,
     ]);
 
+
     res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+}
+
+async function updateDisLike(req, res) {
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  try {
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
+
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+
+    res.sendStatus(200)
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -263,15 +298,14 @@ async function CreateRepost(req, res) {
 async function GetComments(req, res) {
   const { postId, userId } = req.params;
   try {
-    const Comments = await connection.query(
-      `
-    select 
+    const Comments = await connection.query(`
+    select
     comment,
 	users.id AS "userId",
     users."pictureUrl",
     users."name",
 	follow.follows
-    from comments 
+    from comments
     join users on users.id = comments."userId"
 	left join (SELECT follow.follows FROM follow where follow."userId" = $1 GROUP BY follow.follows
     ) follow ON users.id = follow.follows
@@ -284,17 +318,97 @@ async function GetComments(req, res) {
   }
 }
 
+async function getLikers(req, res) {
+  const { postId } = req.params
+  const { userId } = res.locals
+
+  try {
+    const { rows: likers } = await connection.query(`
+    SELECT 
+      u.name,
+      j."isTheLiker"
+    FROM likes l
+    JOIN users u on u.id=l."userId"
+    LEFT JOIN(
+      SELECT
+        u.id AS "isTheLiker"
+      FROM 
+        users u
+      WHERE
+        u.id = $2
+        ) j ON u.id = j."isTheLiker"
+      WHERE l."postId"=$1
+      ORDER BY j."isTheLiker" NULLS LAST
+    `, [postId, userId])
+
+    console.log('likers', likers)
+    let lista = []
+    let frase = ''
+    const numLikes = likers.length
+    // FAZER A VERIFICAÇÃO DO IS THE LIKER
+
+    // console.log('length: ',likers.length)
+
+    if (likers.length === 0) {
+      frase = 'Nenhuma curtida'
+      return res.status(200).send(frase)
+
+    }
+
+    if (likers[0].isTheLiker) {
+      // colocar você
+      if (likers.length === 1) {
+        frase = 'Você curtiu'
+      }
+      if (likers.length === 2) {
+        console.log('length =1')
+        lista.push('Você')
+        lista = [...lista, likers[0].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+
+      }
+      if (likers.length > 2) {
+        lista = [likers[0].name, likers[1].name]
+        frase = `Você, ${likers[0].name} e outros ${numLikes - 2} curtiram`
+
+      }
+
+    } else {
+      // sem você
+      if (likers.length === 1) {
+        frase = likers[0].name + ' curtiu'
+      }
+      if (likers.length === 2) {
+        console.log('length =1')
+        lista = [likers[0].name, likers[1].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+      }
+      if (likers.length > 2) {
+        lista = [likers[0].name, likers[1].name]
+        frase = lista.join(', ')
+        frase = frase + ` e outros ${numLikes - 2} curtiram`
+      }
+    }
+
+
+    res.status(200).send(frase)
+  } catch (error) {
+    console.error(error)
+    res.sendStatus(500)
+
+  }
+}
 async function InsertComment(req, res) {
   const { postId } = req.params;
   const { userId, comment } = req.body;
   try {
-    const query = await connection.query(
-      `
-    INSERT INTO comments 
-    ("postId", "userId", comment) 
-    Values ($1, $2, $3)`,
-      [postId, userId, comment]
-    );
+
+    const query = await connection.query(`
+    INSERT INTO comments
+    ("postId", "userId", comment)
+    Values ($1, $2, $3)`, [postId, userId, comment]);
 
     res.sendStatus(201);
   } catch (error) {
@@ -303,8 +417,7 @@ async function InsertComment(req, res) {
 }
 
 async function getAlertNewPosts(req, res) {
-  const { createdAt } = req.body;
-  // console.log('CREATEAD :', req.body)
+  const { createdAt } = req.body
   try {
     const { rows: posts } = await connection.query(
       `
@@ -315,19 +428,16 @@ async function getAlertNewPosts(req, res) {
     );
     return res.status(200).send(posts.length.toString());
   } catch (error) {
-    console.log("error getAlertNewPosts :", error);
+    console.error("error getAlertNewPosts :", error);
     res.sendStatus(500);
   }
 }
 export {
-  CreatePost,
-  EditPost,
-  DeletePost,
-  GetPost,
-  updateLike,
-  GetPostByUserId,
-  GetComments,
-  InsertComment,
-  getAlertNewPosts,
-  CreateRepost,
+  CreatePost, EditPost,
+  DeletePost, GetPost,
+  updateLike, updateDisLike,
+  GetPostByUserId, GetComments,
+  InsertComment, getAlertNewPosts,
+  CreateRepost, getLikers
+
 };

@@ -54,9 +54,12 @@ async function getTrending() {
   return connection.query(trendingHashtags);
 }
 
+
+
+
 const hashtagRepository = {
   getPostsHashtag,
-  getTrending,
+  getTrending
 };
 
 export { hashtagRepository };

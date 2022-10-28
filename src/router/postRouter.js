@@ -1,9 +1,10 @@
 import {
   CreatePost,       EditPost,
   DeletePost,       GetPost,
-  GetPostByUserId,  updateLike,
+  GetPostByUserId,  getLikers,
   getAlertNewPosts, CreateRepost,
-  GetComments,      InsertComment
+  GetComments,      InsertComment,
+  updateLike,       updateDisLike
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";
@@ -17,7 +18,7 @@ router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
 router.get("/timeline", GetPost);
 
 router.post("/timeline/:id", validateCreatePostSchema, EditPost);
-router.delete("/timeline/:id", validateCreatePostSchema, DeletePost);
+router.delete("/timeline/:id", loggedUser,validateCreatePostSchema, DeletePost);
 
 router.get('/timeline/:postId/comments/:userId', GetComments);
 router.post('/timeline/:postId/comments', InsertComment);
@@ -27,5 +28,7 @@ router.post("/share", loggedUser, CreateRepost);
 router.get("/timeline/getalertnewposts", getAlertNewPosts);
 
 router.put("/timeline/likeUpdate", updateLike);
+router.put("/timeline/dislikeUpdate", updateDisLike);
+router.get("/likes/:postId",loggedUser, getLikers)
 
 export default router;

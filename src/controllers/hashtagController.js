@@ -1,4 +1,8 @@
 import { hashtagRepository } from "../repositories/hashtagRepositories.js";
+
+
+
+
 async function getHashtagPosts(req, res) {
   const { hashtag } = req.params;
   
@@ -16,6 +20,18 @@ async function getTrendingHashtags(req, res) {
     res.status(200).send(trendingHashtags.rows);
   } catch (error) {
     res.status(500).send({ message: error.message });
+  }
+}
+
+async function deleteHashtag(req, res){
+  
+
+  try {
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ message: error.message });
+    
   }
 }
 

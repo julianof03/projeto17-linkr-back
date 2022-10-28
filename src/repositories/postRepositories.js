@@ -37,6 +37,19 @@ async function insertRepost(postId, userId) {
     const query = `INSERT INTO repost ("postId", "userId") VALUES ($1, $2)`
     return connection.query(query, [postId, userId])
 }
+
+
+async function getLikers(){
+    const query = `
+    SELECT 
+        users.name,
+        "postId"
+    FROM likes 
+    JOIN users ON likes."userId"=users.id 
+    ORDER BY "postId"
+    `
+    return connection.query(query)
+}
 const postRepository = {
     insertPost,
     getHashtagIdByName,
@@ -44,7 +57,11 @@ const postRepository = {
     insertHashtag,
     insertLike,
     insertRepost,
-    deletePost
+    deletePost,
+
+
+
+    getLikers
 }
 
 export { postRepository }

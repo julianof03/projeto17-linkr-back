@@ -1,7 +1,8 @@
 import { connection } from "../database/database.js";
 
 async function getPostsHashtag(hashtag) {
-  const postsHashtags = `SELECT 
+  const postsHashtags = `
+  SELECT 
   posts.id AS "postId",
   posts.text,
   posts.link,

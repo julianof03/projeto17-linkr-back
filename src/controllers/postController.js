@@ -94,43 +94,6 @@ async function GetPost(req, res) {
         p.id DESC`, [userId]
     )
 
-    // const { rows: lista } = await connection.query(`
-    // SELECT 
-
-    //       json_build_object(
-    //         'name', users.name,
-    //         'postId', "postId") AS obj
-    // FROM likes JOIN users ON
-    //     likes."userId" = users.id
-    // ORDER BY "postId"
-    // `)
-
-    // const {rows:lista} = await connection.query(`
-    // SELECT users.name 
-    // FROM likes 
-    // JOIN users ON likes."userId"=users.id 
-    // WHERE likes."postId"=$1 `,[60])
-
-
-    // let likers = {lista:1}
-
-    // getPosts.forEach(async (element) => {
-    //   console.log('bolinha')
-    //   const { rows: lista } = await connection.query(`
-    //     SELECT users.name 
-    //     FROM likes 
-    //     JOIN users ON likes."userId"=users.id 
-    //     WHERE likes."postId"=$1 `, [element.postId])
-
-    //   likers = {array: lista}
-    //   console.log(likers)
-
-    // });
-
-    // console.log(likers)
-
-
-
     res.status(201).send(getPosts);
   } catch (error) {
     console.error(error)
@@ -143,28 +106,13 @@ async function GetPostByUserId(req, res) {
   const userId = req.params.id
 
   try {
-    const getPosts = await connection.query(
-      `SELECT 
-        posts.id AS "postId",
-        posts.text,
-        posts.link,
-        users.name AS "username",
-        users.id AS "userId",
-        users."pictureUrl" AS "userImg",
-        l.liked,
-        posts."createdAt"
-        FROM posts
-        JOIN users ON posts."userId" = users.id
-        JOIN (SELECT
-          likes."postId",
-          COUNT(likes."postId")-1 as "liked"
-          FROM likes
-          GROUP BY likes."postId") l ON posts.id = l."postId"
-          WHERE users.id = $1
-        ORDER BY posts."createdAt" DESC`, [userId]
+    const { rows: getPosts } = await connection.query(
+      `select * from posts
+      WHERE "userId"=$1`, [userId]
     )
     // console.log('GETPOSTS :', getPosts.rows)
-    res.status(201).send(getPosts.rows);
+    // console.log(getPosts)
+    res.status(201).send(getPosts);
 
   } catch (error) {
     console.error(error)
@@ -257,11 +205,11 @@ async function CreateRepost(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-async function getAlertNewPosts(req, res){
-  const {createdAt} = req.body
+async function getAlertNewPosts(req, res) {
+  const { createdAt } = req.body
   // console.log('CREATEAD :', req.body)
   try {
-    const {rows: posts} = await connection.query(`
+    const { rows: posts } = await connection.query(`
                             SELECT * FROM posts
                             WHERE posts."createdAt" > $1
                           `, [createdAt])
@@ -273,8 +221,55 @@ async function getAlertNewPosts(req, res){
   }
 }
 
-export { 
-  CreatePost, EditPost, 
-  DeletePost, GetPost, 
-  updateLike,updateDisLike, GetPostByUserId,
-  getAlertNewPosts, CreateRepost };
+async function getLikers(req, res) {
+  const { postId } = req.params
+  const { userId } = res.locals
+  // console.log(userId)
+  try {
+    const { rows: likers } = await connection.query(`
+    SELECT u.name,j."isTheLiker"
+    FROM likes l
+    JOIN users u on u.id=l."userId"
+    LEFT JOIN(
+      SELECT
+        u.id AS "isTheLiker"
+      FROM 
+        users u
+      WHERE
+        u.id = $2
+        ) j ON u.id = j."isTheLiker"
+      WHERE l."postId"=$1
+      ORDER BY j."isTheLiker" NULLS LAST
+      LIMIT 3
+    `, [postId, userId])
+
+    console.log(likers)
+    let lista = []
+    let frase = ''
+    // FAZER A VERIFICAÇÃO DO IS THE LIKER
+    if (likers.length < 2 ) {
+      lista.push('Você')
+      lista = [...lista, likers[0].name]
+      frase = lista.join(', ')
+    } else {
+      lista = [likers[0].name, likers[1].name]
+      frase = lista.join(', ')
+      frase = frase + ' e outros'
+    }
+    // const frase = lista.join
+    console.log(lista)
+
+    res.status(200).send(frase)
+  } catch (error) {
+    console.log('error getAlertNewPosts :', error)
+    res.sendStatus(500)
+
+  }
+}
+
+export {
+  CreatePost, EditPost,
+  DeletePost, GetPost,
+  updateLike, updateDisLike, GetPostByUserId,
+  getAlertNewPosts, CreateRepost, getLikers
+};

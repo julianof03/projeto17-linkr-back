@@ -222,11 +222,11 @@ async function updateLike(req, res) {
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
-    console.log(userId, postId);
-    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [
+    await connection.query('INSERT INTO likes ("userId" ,"postId") VALUES($1, $2) ', [
       userId,
       postId,
     ]);
+    
 
     res.sendStatus(200);
   } catch (error) {
@@ -242,7 +242,6 @@ async function updateDisLike(req, res) {
     const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
     const userId = session.rows[0].userId
 
-    console.log(userId, postId)
     await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
 
     res.sendStatus(200)
@@ -286,10 +285,12 @@ async function GetComments(req, res) {
 async function getLikers(req, res) {
   const { postId } = req.params
   const { userId } = res.locals
-  // console.log(userId)
+
   try {
     const { rows: likers } = await connection.query(`
-    SELECT u.name,j."isTheLiker"
+    SELECT 
+      u.name,
+      j."isTheLiker"
     FROM likes l
     JOIN users u on u.id=l."userId"
     LEFT JOIN(
@@ -302,28 +303,63 @@ async function getLikers(req, res) {
         ) j ON u.id = j."isTheLiker"
       WHERE l."postId"=$1
       ORDER BY j."isTheLiker" NULLS LAST
-      LIMIT 3
     `, [postId, userId])
 
-    console.log(likers)
+    console.log('likers',likers)
     let lista = []
     let frase = ''
+    const numLikes = likers.length
     // FAZER A VERIFICAÇÃO DO IS THE LIKER
-    if (likers.length < 2) {
-      lista.push('Você')
-      lista = [...lista, likers[0].name]
-      frase = lista.join(', ')
-    } else {
-      lista = [likers[0].name, likers[1].name]
-      frase = lista.join(', ')
-      frase = frase + ' e outros'
+
+    // console.log('length: ',likers.length)
+
+    if(likers.length === 0){
+      frase = 'Nenhuma curtida'
+      return res.status(200).send(frase)
+
     }
-    // const frase = lista.join
-    console.log(lista)
+
+    if(likers[0].isTheLiker){
+      // colocar você
+      if(likers.length === 1){
+        frase = 'Você curtiu'
+      }
+      if (likers.length === 2  ) {
+        console.log('length =1')
+        lista.push('Você')
+        lista = [...lista, likers[0].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+  
+      } 
+      if(likers.length > 2 ) {
+        lista = [likers[0].name, likers[1].name]
+        frase = `Você, ${likers[0].name} e outros ${numLikes -2} curtiram`
+        
+      }
+
+    }else{
+      // sem você
+      if(likers.length === 1){
+        frase = likers[0].name + ' curtiu'
+      }
+      if (likers.length === 2  ) {
+        console.log('length =1')
+        lista = [ likers[0].name, likers[1].name]
+        frase = lista.join(' e ')
+        frase = frase + ` curtiram`
+      } 
+      if(likers.length > 2 ) {
+        lista = [likers[0].name, likers[1].name]
+        frase = lista.join(', ')
+        frase = frase +  ` e outros ${numLikes -2} curtiram`
+      }
+    }
+    
 
     res.status(200).send(frase)
   } catch (error) {
-    console.log('error getAlertNewPosts :', error)
+    console.error( error)
     res.sendStatus(500)
 
   }
@@ -347,7 +383,6 @@ async function InsertComment(req, res) {
 
 async function getAlertNewPosts(req, res) {
   const { createdAt } = req.body
-  // console.log('CREATEAD :', req.body)
   try {
     const { rows: posts } = await connection.query(
       `
@@ -358,7 +393,7 @@ async function getAlertNewPosts(req, res) {
     );
     return res.status(200).send(posts.length.toString());
   } catch (error) {
-    console.log("error getAlertNewPosts :", error);
+    console.error("error getAlertNewPosts :", error);
     res.sendStatus(500);
   }
 }

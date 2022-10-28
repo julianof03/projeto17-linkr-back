@@ -31,7 +31,7 @@ async function CreatePost(req, res) {
         const atual = hashtagsArray[i];
         const isHashtagExists = await postRepository.getHashtagIdByName(atual);
         let hashtagId;
-        
+
         if (isHashtagExists.rowCount !== 0) {
 
           hashtagId = isHashtagExists.rows[0].id;
@@ -41,9 +41,9 @@ async function CreatePost(req, res) {
         }
 
         await postRepository.insertHashtag(atual);
-        
+
         const newHashtagId = await postRepository.getHashtagIdByName(atual);
-        
+
         hashtagId = newHashtagId.rows[0].id;
         await insertHashPost(hashtagId, userId, text, link);
       }
@@ -81,7 +81,8 @@ async function GetPost(req, res) {
         p."userId",
         l."likesQtd",
         j."userLiked", 
-        repost."repostCount"
+        repost."repostCount",
+		comments."commentCount"
       FROM
         posts p
       JOIN
@@ -112,6 +113,9 @@ async function GetPost(req, res) {
       LEFT JOIN
       (SELECT repost."postId", COUNT(repost."postId") AS "repostCount" FROM repost GROUP BY repost."postId"
     ) repost ON p.id = repost."postId"
+      LEFT JOIN
+      (SELECT comments."postId", COUNT(comments."postId") AS "commentCount" FROM comments GROUP BY comments."postId"
+    ) comments ON p.id = comments."postId"
       
       ORDER BY
         p.id DESC`,
@@ -163,7 +167,7 @@ async function GetPostByUserId(req, res) {
     console.error(error);
     res.sendStatus(500);
   }
-  
+
 }
 async function EditPost(req, res) {
 
@@ -241,30 +245,31 @@ async function CreateRepost(req, res) {
   }
 }
 
-async function GetComments(req, res){
-  const {postId} = req.params;
-
+async function GetComments(req, res) {
+  const { postId, userId } = req.params;
   try {
-
-    const Comments = await connection.query(`select 
+    const Comments = await connection.query(`
+    select 
     comment,
-	  users.id AS "userId",
+	users.id AS "userId",
     users."pictureUrl",
-    users."name"
+    users."name",
+	follow.follows
     from comments 
     join users on users.id = comments."userId"
-    where "postId" = $1`, [postId])
-
-  res.status(201).send(Comments.rows);
+	left join (SELECT follow.follows FROM follow where follow."userId" = $1 GROUP BY follow.follows
+    ) follow ON users.id = follow.follows
+    where "postId" = $2`, [userId, postId])
+    res.status(201).send(Comments.rows);
 
   } catch (error) {
     res.status(501).send({ message: error.message });
   }
 }
-async function InsertComment(req, res){
-  const {postId} = req.params;
-  const {userId, comment} = req.body;
-  console.log(postId);
+
+async function InsertComment(req, res) {
+  const { postId } = req.params;
+  const { userId, comment } = req.body;
   try {
 
     const query = await connection.query(`
@@ -272,15 +277,15 @@ async function InsertComment(req, res){
     ("postId", "userId", comment) 
     Values ($1, $2, $3)`, [postId, userId, comment]);
 
-  res.sendStatus(201);
+    res.sendStatus(201);
 
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 }
 
-async function getAlertNewPosts(req, res){
-  const {createdAt} = req.body
+async function getAlertNewPosts(req, res) {
+  const { createdAt } = req.body
   // console.log('CREATEAD :', req.body)
   try {
     const { rows: posts } = await connection.query(
@@ -296,10 +301,10 @@ async function getAlertNewPosts(req, res){
     res.sendStatus(500);
   }
 }
-export { 
-  CreatePost, EditPost, 
-  DeletePost, GetPost, 
-  updateLike, GetPostByUserId, 
+export {
+  CreatePost, EditPost,
+  DeletePost, GetPost,
+  updateLike, GetPostByUserId,
   GetComments, InsertComment,
-  getAlertNewPosts, CreateRepost, 
-   };
+  getAlertNewPosts, CreateRepost,
+};

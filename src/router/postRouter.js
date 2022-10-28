@@ -19,7 +19,7 @@ router.get("/timeline", GetPost);
 router.post("/timeline/:id", validateCreatePostSchema, EditPost);
 router.delete("/timeline/:id", validateCreatePostSchema, DeletePost);
 
-router.get('/timeline/:postId/comments', GetComments);
+router.get('/timeline/:postId/comments/:userId', GetComments);
 router.post('/timeline/:postId/comments', InsertComment);
 
 router.get("/users/:id", loggedUser, GetPostByUserId);

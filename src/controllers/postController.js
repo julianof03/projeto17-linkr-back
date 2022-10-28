@@ -1,67 +1,6 @@
 import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
-async function CreatePost(req, res) {
-  console.log('createPost controller')
-  const { text, link } = req.body;
-  const { userId } = res.locals;
-  const hashtagsArray = [];
-  await text.split(" ").forEach((value) => {
-    if (value[0] === "#") {
-      hashtagsArray.push(value.replace("#", ""));
-    }
-  });
-
-  try {
-    await postRepository.insertPost(userId, text, link);
-    const getPost = await connection.query(
-      `
-    SELECT * FROM posts 
-    WHERE posts."userId" = $1`,
-      [userId]
-    );
-
-    if (hashtagsArray.length !== 0) {
-
-      for (let i = 0; i < hashtagsArray.length; i++) {
-
-        const atual = hashtagsArray[i];
-        const isHashtagExists = await postRepository.getHashtagIdByName(atual);
-        let hashtagId;
-
-        if (isHashtagExists.rowCount !== 0) {
-
-          hashtagId = isHashtagExists.rows[0].id;
-          await insertHashPost(hashtagId, userId, text, link);
-
-          continue;
-        }
-
-        await postRepository.insertHashtag(atual);
-
-        const newHashtagId = await postRepository.getHashtagIdByName(atual);
-
-        hashtagId = newHashtagId.rows[0].id;
-        await insertHashPost(hashtagId, userId, text, link);
-      }
-    }
-
-    // await connection.query(`
-    //   INSERT INTO feed("postId", repostId)
-    //   VALUES ($1, $2)
-    // `, [postId, NULL])
-
-
-    return res.sendStatus(201);
-
-  } catch (error) {
-
-    console.log(error);
-    res.status(500).send({ message: error.message });
-
-  }
-}
-
 async function GetPost(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
 
@@ -192,7 +131,6 @@ async function EditPost(req, res) {
     res.status(404).send({ message: "url não encontrado" });
   }
 }
-
 async function DeletePost(req, res) {
 
   const { id } = req.params;
@@ -207,17 +145,6 @@ async function DeletePost(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
-async function insertHashPost(hashtagId, userId, text, link) {
-
-  const postId = await postRepository.getPostId(userId, text, link);
-  await connection.query('INSERT INTO "hashPost" ("postId", "hashtagId") VALUES ($1, $2)', [
-    postId.rows[0].id,
-    hashtagId,
-  ]);
-
-}
-
 async function updateLike(req, res) {
   const { postId } = req.body;
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -236,7 +163,6 @@ async function updateLike(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
 async function CreateRepost(req, res) {
   console.log('REQ.BODY CREATE REPOST :', req.body)
   const { postId, userId } = req.body;
@@ -249,7 +175,6 @@ async function CreateRepost(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-
 async function GetComments(req, res) {
   const { postId, userId } = req.params;
   try {
@@ -271,7 +196,6 @@ async function GetComments(req, res) {
     res.status(501).send({ message: error.message });
   }
 }
-
 async function InsertComment(req, res) {
   const { postId } = req.params;
   const { userId, comment } = req.body;
@@ -288,7 +212,6 @@ async function InsertComment(req, res) {
     res.status(500).send({ message: error.message });
   }
 }
-
 async function getAlertNewPosts(req, res) {
   const { createdAt } = req.body
   try {
@@ -305,8 +228,9 @@ async function getAlertNewPosts(req, res) {
     res.sendStatus(500);
   }
 }
+
 export {
-  CreatePost, EditPost,
+  EditPost,
   DeletePost, GetPost,
   updateLike, GetPostByUserId,
   GetComments, InsertComment,

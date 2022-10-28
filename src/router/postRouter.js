@@ -1,6 +1,5 @@
 import {
-  CreatePost,       EditPost,
-  DeletePost,       GetPost,
+  EditPost, DeletePost, GetPost,
   GetPostByUserId,  updateLike,
   getAlertNewPosts, CreateRepost,
   GetComments,      InsertComment
@@ -13,7 +12,7 @@ import express from "express";
 
 const router = express.Router();
 
-router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
+// router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
 // router.get("/timeline", GetPost);
 
 router.post("/timeline/:id", validateCreatePostSchema, EditPost);

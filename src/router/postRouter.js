@@ -3,8 +3,7 @@ import {
   DeletePost,       GetPost,
   GetPostByUserId,  updateLike,
   getAlertNewPosts, CreateRepost,
-  GetComments,      updateDisLike,
-  InsertComment
+  GetComments,      InsertComment
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";

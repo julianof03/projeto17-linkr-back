@@ -1,13 +1,10 @@
 import {
-  CreatePost,
-  EditPost,
-  DeletePost,
-  GetPost,
-  GetPostByUserId,
-  updateLike,
-  getAlertNewPosts,
-  CreateRepost,
-  GetComments,
+  CreatePost,       EditPost,
+  DeletePost,       GetPost,
+  GetPostByUserId,  updateLike,
+  getAlertNewPosts, CreateRepost,
+  GetComments,      updateDisLike,
+  InsertComment
 } from "../controllers/postController.js";
 import { validateCreatePostSchema } from "../middlewares/postMiddleware.js";
 import { schemaValidation } from "../middlewares/SchemaValidation.js";
@@ -19,12 +16,19 @@ const router = express.Router();
 
 router.post("/timeline", loggedUser, schemaValidation(postSchema), CreatePost);
 router.get("/timeline", GetPost);
+
 router.post("/timeline/:id", validateCreatePostSchema, EditPost);
 router.delete("/timeline/:id", validateCreatePostSchema, DeletePost);
+
 router.get('/timeline/:postId/comments', GetComments);
+router.post('/timeline/:postId/comments', InsertComment);
+
 router.get("/users/:id", /* loggedUser, */ GetPostByUserId);
+
 router.post("/share", loggedUser, CreateRepost);
 router.get("/timeline/getalertnewposts", getAlertNewPosts);
+
 router.put("/timeline/likeUpdate", updateLike);
+router.put("/timeline/dislikeUpdate", updateDisLike);
 
 export default router;

@@ -7,11 +7,6 @@ async function insertPost(userId, text, link) {
 
 }
 async function insertLike(userId, postId) {
-<<<<<<< HEAD
-    // const query = `INSERT INTO likes ( "userId", "postId", liked) VALUES ($1, $2, $3)`
-    // return connection.query(query, [userId, postId, liked])
-=======
->>>>>>> main
     const query = `INSERT INTO likes ( "userId", "postId") VALUES ($1, $2)`
     return connection.query(query, [userId, postId])
 }
@@ -22,7 +17,6 @@ async function getHashtagIdByName(atual) {
 }
 
 async function getPostId(userId, text, link) {
-
     const query = 'SELECT (id) from posts WHERE "userId" = $1 AND text = $2 AND link = $3 ORDER BY "createdAt" DESC LIMIT 1'
     return connection.query(query, [userId, text, link])
 }
@@ -48,7 +42,7 @@ const postRepository = {
     insertHashtag,
     insertLike,
     insertRepost,
-    deletePost
+    deletePost,
 }
 
 export { postRepository }

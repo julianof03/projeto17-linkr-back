@@ -106,44 +106,6 @@ async function GetPost(req, res) {
       ORDER BY
         p.id DESC`, [userId]
     )
-
-    // const { rows: lista } = await connection.query(`
-    // SELECT 
-
-    //       json_build_object(
-    //         'name', users.name,
-    //         'postId', "postId") AS obj
-    // FROM likes JOIN users ON
-    //     likes."userId" = users.id
-    // ORDER BY "postId"
-    // `)
-
-    // const {rows:lista} = await connection.query(`
-    // SELECT users.name 
-    // FROM likes 
-    // JOIN users ON likes."userId"=users.id 
-    // WHERE likes."postId"=$1 `,[60])
-
-
-    // let likers = {lista:1}
-
-    // getPosts.forEach(async (element) => {
-    //   console.log('bolinha')
-    //   const { rows: lista } = await connection.query(`
-    //     SELECT users.name 
-    //     FROM likes 
-    //     JOIN users ON likes."userId"=users.id 
-    //     WHERE likes."postId"=$1 `, [element.postId])
-
-    //   likers = {array: lista}
-    //   console.log(likers)
-
-    // });
-
-    // console.log(likers)
-
-
-
     res.status(201).send(getPosts);
   } catch (error) {
     console.error(error)
@@ -253,6 +215,23 @@ async function updateLike(req, res) {
   }
 }
 
+async function updateDisLike(req, res) {
+  const { postId } = req.body
+  const token = req.headers.authorization?.replace('Bearer ', '')
+
+  try {
+    const session = await connection.query('SELECT * FROM sessions WHERE sessions."token" = $1', [token])
+    const userId = session.rows[0].userId
+
+    console.log(userId, postId)
+    await connection.query('DELETE FROM likes WHERE "userId" = $1 AND "postId" = $2', [userId, postId])
+
+    res.sendStatus(200)
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+}
+
 async function CreateRepost(req, res) {
   const { postId, userId } = req.body;
 
@@ -271,6 +250,7 @@ async function GetComments(req, res){
 
     const Comments = await connection.query(`select 
     comment,
+	  users.id AS "userId",
     users."pictureUrl",
     users."name"
     from comments 
@@ -281,6 +261,23 @@ async function GetComments(req, res){
 
   } catch (error) {
     res.status(501).send({ message: error.message });
+  }
+}
+async function InsertComment(req, res){
+  const {postId} = req.params;
+  const {userId, comment} = req.body;
+  console.log(postId);
+  try {
+
+    const query = await connection.query(`
+    INSERT INTO comments 
+    ("postId", "userId", comment) 
+    Values ($1, $2, $3)`, [postId, userId, comment]);
+
+  res.sendStatus(201);
+
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
 }
 
@@ -303,5 +300,6 @@ export {
   CreatePost, EditPost, 
   DeletePost, GetPost, 
   updateLike, GetPostByUserId, 
-  GetComments, getAlertNewPosts, 
-  CreateRepost};
+  GetComments, InsertComment,
+  getAlertNewPosts, CreateRepost, 
+  updateDisLike};

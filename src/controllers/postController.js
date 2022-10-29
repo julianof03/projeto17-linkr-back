@@ -89,7 +89,6 @@ async function DeletePost(req, res) {
 
           hashtagId = isHashtagExists.rows[0].id;
           await postRepository.deleteHashtag(hashtagId, postId);
-          console.log('3')
 
           continue;
 
@@ -140,9 +139,7 @@ async function updateDisLike(req, res) {
   }
 }
 async function CreateRepost(req, res) {
-  console.log('REQ.BODY CREATE REPOST :', req.body)
   const { postId, userId } = req.body;
-  console.log('userId do repostador :', userId)
 
   try {
     await postRepository.insertRepost(postId, userId);
@@ -196,13 +193,9 @@ async function getLikers(req, res) {
       ORDER BY j."isTheLiker" NULLS LAST
     `, [postId, userId])
 
-    console.log('likers', likers)
     let lista = []
     let frase = ''
     const numLikes = likers.length
-    // FAZER A VERIFICAÇÃO DO IS THE LIKER
-
-    // console.log('length: ',likers.length)
 
     if (likers.length === 0) {
       frase = 'Nenhuma curtida'
@@ -216,7 +209,6 @@ async function getLikers(req, res) {
         frase = 'Você curtiu'
       }
       if (likers.length === 2) {
-        console.log('length =1')
         lista.push('Você')
         lista = [...lista, likers[0].name]
         frase = lista.join(' e ')
@@ -235,7 +227,6 @@ async function getLikers(req, res) {
         frase = likers[0].name + ' curtiu'
       }
       if (likers.length === 2) {
-        console.log('length =1')
         lista = [likers[0].name, likers[1].name]
         frase = lista.join(' e ')
         frase = frase + ` curtiram`

@@ -2,7 +2,6 @@ import { connection } from "../database/database.js";
 import { postRepository } from "../repositories/postRepositories.js";
 
 export async function timeLine(req, res) {
-    console.log('timiline Controller')
     const token = req.headers.authorization?.replace("Bearer ", "");
 
     try {
@@ -69,7 +68,6 @@ export async function timeLine(req, res) {
   }
 
 export async function repost(req, res) {
-  console.log('repost controller', req.body)
   const {postId, userId} = req.body
 
   try {
@@ -97,7 +95,6 @@ export async function repost(req, res) {
   }
 
 export async function CreatePost(req, res) {
-  console.log('createPost controller')
   const { text, link } = req.body;
   const { userId } = res.locals;
   const hashtagsArray = [];

@@ -147,7 +147,7 @@ export async function CreatePost(req, res) {
   } catch (error) {
 
     console.log(error);
-    res.status(500).send({ message: error.message });
+    res.status(500).send({ message: error.message }, "errei");
 
   }
   }

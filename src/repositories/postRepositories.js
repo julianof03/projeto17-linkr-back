@@ -1,7 +1,7 @@
 import { connection } from "../database/database.js";
 
 async function insertPost(userId, text, link) {
-    const query = `INSERT INTO posts ("userId", text, link) VALUES ($1, $2, $3)`
+    const query = `INSERT INTO posts ("userId", text, link, "createdAt") VALUES ($1, $2, $3, NOW())`
 
     return connection.query(query, [userId, text, link])
 

@@ -27,3 +27,4 @@ router.put("/timeline/dislikeUpdate", updateDisLike);
 router.get("/likes/:postId",loggedUser, getLikers)
 
 export default router;
+ 

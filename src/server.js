@@ -17,8 +17,7 @@ server.use(authRouter);
 server.use(PostRouter);
 server.use(userRouter);
 server.use(hashtagRouter);
-server.use(feedRouter)
-
+server.use(feedRouter);
 server.listen(process.env.PORT, () => {
   console.log(`Magic happens on ${process.env.PORT}`);
 });

@@ -97,6 +97,8 @@ export async function repost(req, res) {
 export async function CreatePost(req, res) {
   const { text, link } = req.body;
   const { userId } = res.locals;
+  console.log(text, link, userId)
+  console.log("cheguei");
   const hashtagsArray = [];
   await text.split(" ").forEach((value) => {
     if (value[0] === "#") {
@@ -122,7 +124,7 @@ export async function CreatePost(req, res) {
         if (isHashtagExists.rowCount !== 0) {
           hashtagId = isHashtagExists.rows[0].id;
           await insertHashPost(hashtagId, userId, text, link);
-          continue;
+          continue; 
         }
         await postRepository.insertHashtag(atual);
         const newHashtagId = await postRepository.getHashtagIdByName(atual);
@@ -147,7 +149,7 @@ export async function CreatePost(req, res) {
   } catch (error) {
 
     console.log(error);
-    res.status(500).send({ message: error.message }, "errei");
+    res.status(404).send({ message: error.message });
 
   }
   }

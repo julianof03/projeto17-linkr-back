@@ -5,7 +5,7 @@ import {connection} from '../database/database.js'
 
 export function validateSignUp(req, res, next) {
     const customer = req.body;
-    console.log("im here")
+    console.log("im here");
 
     const { error } = signUpSchema.validate(customer, { abortEarly: false });
 

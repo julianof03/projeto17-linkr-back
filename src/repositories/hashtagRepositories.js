@@ -16,8 +16,8 @@ async function getPostsHashtag(hashtag) {
         posts p
       JOIN
         users u ON p."userId"= u.id
-      LEFT JOIN "hashPost" ON "hashPost"."postId" = p.id
-      LEFT JOIN hashtags ON "hashPost"."hashtagId" = hashtags.id
+      LEFT JOIN "HashPost" ON "HashPost"."postId" = p.id
+      LEFT JOIN Hashtags ON "HashPost"."hashtagId" = Hashtags.id
 
       LEFT JOIN
       (SELECT
@@ -43,14 +43,14 @@ async function getPostsHashtag(hashtag) {
       (SELECT repost."postId", COUNT(repost."postId") AS "repostCount" FROM repost GROUP BY repost."postId"
     ) repost ON p.id = repost."postId"
       
-  WHERE hashtags.name = $1
+  WHERE Hashtags.name = $1
   ORDER BY p."createdAt" DESC`;
   return connection.query(postsHashtags, [hashtag]);
 }
 
 async function getTrending() {
   const trendingHashtags =
-    'SELECT hashtags.name, COUNT("hashPost"."hashtagId") AS "countMentions" from hashtags JOIN "hashPost" ON "hashPost"."hashtagId" = hashtags.id GROUP BY hashtags.name ORDER BY "countMentions" DESC LIMIT 10';
+    'SELECT Hashtags.name, COUNT("HashPost"."hashtagId") AS "countMentions" from Hashtags JOIN "HashPost" ON "HashPost"."hashtagId" = Hashtags.id GROUP BY Hashtags.name ORDER BY "countMentions" DESC LIMIT 10';
   return connection.query(trendingHashtags);
 }
 

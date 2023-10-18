@@ -38,6 +38,7 @@ async function deletePost(id) {
 }
 
 async function insertRepost(postId, userId) {
+    console.log("cheguei no repost", " post Id:", postId, " User Id:", userId);
     const query = `INSERT INTO repost ("postId", "userId") VALUES ($1, $2)`
     return connection.query(query, [postId, userId])
 }
